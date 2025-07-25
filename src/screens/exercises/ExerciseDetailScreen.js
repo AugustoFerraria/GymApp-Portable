@@ -1,27 +1,24 @@
+// src/screens/exercises/ExerciseDetailScreen.js
 import React, { useState, useEffect } from 'react';
-import { ScrollView, View, Text, StyleSheet } from 'react-native';
+import { ScrollView, Text, View, StyleSheet, Button } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Button } from 'react-native-paper';
 
-import Background   from '../../components/Background';
-import ToggleButton from '../../components/ToggleButton';
-import ErrorText    from '../../components/ErrorText';
+import Background    from '../../components/Background';
+import ToggleButton  from '../../components/ToggleButton';
+import ErrorText     from '../../components/ErrorText';
 import ProgressChart from '../../components/ProgressChart';
 
-export default function ExerciseDetailScreen({ route, navigation }) {
-  // Ahora route.params siempre trae el objeto exercise
+export default function ExerciseDetailScreen({ route }) {
   const { exercise } = route.params;
-
   const [viewMode, setViewMode] = useState('Repeticiones');
-  const [data, setData]       = useState([]);
-  const [error, setError]     = useState('');
+  const [data, setData]         = useState([]);
+  const [error, setError]       = useState('');
 
   useEffect(() => {
-    // Cargamos los datos guardados para este ejercicio
     AsyncStorage.getItem(`exercise-${exercise.id}`)
       .then(json => (json ? JSON.parse(json) : []))
       .then(setData)
-      .catch(() => setError('Error al cargar los datos'));
+      .catch(() => setError('Error al cargar datos'));
   }, [exercise.id]);
 
   return (
@@ -37,25 +34,16 @@ export default function ExerciseDetailScreen({ route, navigation }) {
           style={styles.toggle}
         />
 
-        {/* Aquí se muestra el ProgressChart sin problema de import */}
         <ProgressChart data={data} viewMode={viewMode} />
 
         {error ? (
           <ErrorText message={error} />
         ) : (
           <Button
-            mode="contained"
-            style={styles.addButton}
-            onPress={() =>
-              navigation.navigate('CrearEjercicio', {
-                exercise,
-                viewMode,
-                existingData: data,
-              })
-            }
-          >
-            AÑADIR {viewMode.toUpperCase()}
-          </Button>
+            title={`AÑADIR ${viewMode.toUpperCase()}`}
+            onPress={() => {}}
+            color="#FFD700"
+          />
         )}
       </ScrollView>
     </Background>
@@ -63,28 +51,9 @@ export default function ExerciseDetailScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding:       16,
-    paddingBottom: 32,
-  },
-  title: {
-    fontSize:     22,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  separator: {
-    height:          1,
-    backgroundColor: '#CCC',
-    marginVertical:  12,
-  },
-  toggle: {
-    marginBottom: 24,
-  },
-  addButton: {
-    backgroundColor: '#FFD700',
-    borderRadius:    8,
-    height:          48,
-    justifyContent:  'center',
-    marginVertical:  16,
-  },
+  container:   { padding: 16, paddingBottom: 32 },
+  title:       { fontSize: 22, fontWeight: 'bold', marginBottom: 8 },
+  separator:   { height: 1, backgroundColor: '#CCC', marginVertical: 12 },
+  toggle:      { marginBottom: 24 },
+  addButton:   { marginTop: 16 },
 });

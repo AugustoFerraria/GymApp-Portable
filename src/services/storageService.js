@@ -84,3 +84,12 @@ export async function updateProgress(progressEntry, newValues) {
   await AsyncStorage.setItem(PROGRESSES_KEY, JSON.stringify(updatedAll));
   return updatedAll;
 }
+
+export async function deleteRoutine(routineId) {
+  const ROUTINES_KEY = 'mis_rutinas';
+  const json = await AsyncStorage.getItem(ROUTINES_KEY);
+  const arr = json ? JSON.parse(json) : [];
+  const filtered = arr.filter(r => r.id !== routineId);
+  await AsyncStorage.setItem(ROUTINES_KEY, JSON.stringify(filtered));
+  return filtered;
+}

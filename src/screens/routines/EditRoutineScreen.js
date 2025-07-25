@@ -1,244 +1,154 @@
+// src/screens/routines/EditRoutineScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TextInput, Text, ScrollView } from 'react-native';
-import { Button, IconButton } from 'react-native-paper';
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  ScrollView,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+} from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 
-const EditRoutineScreen = ({ route, navigation }) => {
+import {
+  getExercises,
+  getRoutines,
+  updateRoutine,
+} from '../../services/storageService';
+
+export default function EditRoutineScreen({ route, navigation }) {
   const { routineId } = route.params;
-  const [routine, setRoutine] = useState(null);
-  const [exercises, setExercises] = useState([]);
-  const [selectedExercise, setSelectedExercise] = useState(null);
-  const [quantity, setQuantity] = useState('');
-  const [sets, setSets] = useState('');
-  const [notes, setNotes] = useState('');
-  const [openDropdown, setOpenDropdown] = useState(false);
+  const [nombre, setNombre]               = useState('');
+  const [descripcion, setDescripcion]     = useState('');
+  const [allExercises, setAllExercises]   = useState([]);
+  const [dropdownOpen, setDropdownOpen]   = useState(false);
+  const [seleccion, setSeleccion]         = useState(null);
+  const [repsInput, setRepsInput]         = useState('');
+  const [routineExercises, setRoutineExercises] = useState([]);
 
   useEffect(() => {
-    const fetchRoutine = async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
-        const config = {
-          headers: {
-            'x-auth-token': token,
-          },
-        };
-        const response = await axios.get(`http://localhost:3001/api/routines/${routineId}`, config);
-        setRoutine(response.data);
-      } catch (error) {
-        console.error('Error fetching routine:', error);
-      }
-    };
+    (async () => {
+      const exArr = await getExercises();
+      setAllExercises(exArr.map(e => ({ label: e.name, value: e.id })));
 
-    const fetchExercises = async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
-        const config = {
-          headers: {
-            'x-auth-token': token,
-          },
-        };
-        const response = await axios.get('http://localhost:3001/api/exercises/all', config);
-        setExercises(response.data.map(exercise => ({ label: exercise.name, value: exercise._id })));
-      } catch (error) {
-        console.error('Error fetching exercises:', error);
+      const routines = await getRoutines();
+      const rt = routines.find(r => r.id === routineId);
+      if (!rt) {
+        Alert.alert('Error', 'Rutina no encontrada');
+        return navigation.goBack();
       }
-    };
-
-    fetchRoutine();
-    fetchExercises();
-  }, [routineId]);
+      setNombre(rt.name);
+      setDescripcion(rt.description || '');
+      setRoutineExercises(rt.exercises);
+    })();
+  }, []);
 
   const handleAddExercise = () => {
-    if (selectedExercise && quantity) {
-      setRoutine(prevRoutine => ({
-        ...prevRoutine,
-        exercises: [
-          ...prevRoutine.exercises,
-          { exerciseId: selectedExercise, quantity: parseInt(quantity, 10), sets: parseInt(sets, 10) || 1, notes: notes || '' }
-        ],
-      }));
-      setSelectedExercise(null);
-      setQuantity('');
-      setSets('');
-      setNotes('');
+    if (!seleccion || !repsInput) {
+      return Alert.alert('Atención', 'Selecciona ejercicio y repeticiones');
     }
-  };
-
-  const handleSaveRoutine = async () => {
-    try {
-      const token = await AsyncStorage.getItem('token');
-      const config = {
-        headers: {
-          'x-auth-token': token,
-        },
-      };
-      await axios.put(`http://localhost:3001/api/routines/${routineId}`, routine, config);
-      navigation.goBack();
-    } catch (error) {
-      console.error('Error saving routine:', error);
+    if (routineExercises.some(e => e.id === seleccion)) {
+      return Alert.alert('Atención', 'Ejercicio ya agregado');
     }
+    const label = allExercises.find(e => e.value === seleccion)?.label || '';
+    setRoutineExercises([
+      ...routineExercises,
+      { id: seleccion, name: label, reps: parseInt(repsInput, 10) },
+    ]);
+    setSeleccion(null);
+    setRepsInput('');
   };
 
-  const handleRemoveExercise = (index) => {
-    setRoutine(prevRoutine => ({
-      ...prevRoutine,
-      exercises: prevRoutine.exercises.filter((_, i) => i !== index)
-    }));
+  const handleRemove = id => {
+    setRoutineExercises(routineExercises.filter(e => e.id !== id));
   };
 
-  if (!routine) {
-    return (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
+  const handleSave = async () => {
+    if (!nombre.trim() || routineExercises.length === 0) {
+      return Alert.alert('Atención', 'Nombre y al menos un ejercicio son obligatorios');
+    }
+    const updated = {
+      id:          routineId,
+      name:        nombre.trim(),
+      description: descripcion.trim(),
+      exercises:   routineExercises,
+    };
+    await updateRoutine(updated);
+    navigation.goBack();
+  };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.label}>Nome della routine:</Text>
-      <TextInput
-        style={styles.input}
-        value={routine.name}
-        onChangeText={(text) => setRoutine({ ...routine, name: text })}
-      />
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.label}>Nombre:</Text>
+      <TextInput style={styles.input} value={nombre} onChangeText={setNombre} />
 
-      <Text style={styles.label}>Descrizione:</Text>
-      <TextInput
-        style={styles.input}
-        value={routine.description}
-        onChangeText={(text) => setRoutine({ ...routine, description: text })}
-      />
+      <Text style={styles.label}>Descripción:</Text>
+      <TextInput style={styles.input} value={descripcion} onChangeText={setDescripcion} />
 
-      <Text style={styles.label}>Esercizi:</Text>
-      <View style={styles.exerciseTable}>
-        <View style={styles.tableHeader}>
-          <Text style={styles.tableHeaderText}>Esercizio</Text>
-          <Text style={styles.tableHeaderText}>Ripetizioni</Text>
-          <Text style={styles.tableHeaderText}>Serie</Text>
-          <Text style={styles.tableHeaderText}>Note</Text>
-          <Text style={styles.tableHeaderText}></Text> {/* Columna para el ícono */}
-        </View>
-        {routine.exercises.map((exercise, index) => (
-          <View key={index} style={styles.tableRow}>
-            <Text style={styles.tableCellText}>{exercise.exerciseId.name}</Text>
-            <Text style={styles.tableCellText}>{exercise.quantity}</Text>
-            <Text style={styles.tableCellText}>{exercise.sets}</Text>
-            <Text style={styles.tableCellText}>{exercise.notes}</Text>
-            <IconButton
-              icon="delete"
-              color="#FF0000"
-              size={20}
-              onPress={() => handleRemoveExercise(index)}
-            />
-          </View>
-        ))}
-      </View>
-
+      <Text style={styles.label}>Agregar ejercicio:</Text>
       <DropDownPicker
-        open={openDropdown}
-        value={selectedExercise}
-        items={exercises}
-        setOpen={setOpenDropdown}
-        setValue={setSelectedExercise}
-        placeholder="Seleziona esercizio"
-        style={styles.dropdown}
+        open={dropdownOpen}
+        value={seleccion}
+        items={allExercises}
+        setOpen={setDropdownOpen}
+        setValue={setSeleccion}
+        containerStyle={styles.picker}
       />
-      <TextInput
-        style={styles.input}
-        value={quantity}
-        onChangeText={setQuantity}
-        placeholder="Ripetizioni"
-        keyboardType="numeric"
-      />
-      <TextInput
-        style={styles.input}
-        value={sets}
-        onChangeText={setSets}
-        placeholder="Serie"
-        keyboardType="numeric"
-      />
-      <TextInput
-        style={styles.input}
-        value={notes}
-        onChangeText={setNotes}
-        placeholder="Note"
-      />
-      <Button mode="contained" onPress={handleAddExercise} style={styles.addButton}>
-        Aggiungi esercizio
-      </Button>
 
-      <Button mode="contained" onPress={handleSaveRoutine} style={styles.saveButton}>
-        Salva Routine
-      </Button>
+      <TextInput
+        style={styles.input}
+        placeholder="Repeticiones"
+        keyboardType="numeric"
+        value={repsInput}
+        onChangeText={setRepsInput}
+      />
+
+      <Button title="＋ Agregar ejercicio" onPress={handleAddExercise} color="#FFD700" />
+
+      {routineExercises.length > 0 && (
+        <>
+          <Text style={[styles.label, { marginTop: 20 }]}>Ejercicios:</Text>
+          {routineExercises.map(e => (
+            <View key={e.id} style={styles.card}>
+              <Text>{e.name} — {e.reps} reps</Text>
+              <TouchableOpacity onPress={() => handleRemove(e.id)}>
+                <Text style={styles.remove}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </>
+      )}
+
+      <View style={styles.saveBtn}>
+        <Button title="Guardar cambios" onPress={handleSave} color="#FFD700" />
+      </View>
     </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#F5F5F5',
-  },
-  label: {
-    fontSize: 16,
-    color: '#151515',
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#FFF',
-    padding: 10,
+  container:   { padding: 20 },
+  label:       { fontSize: 16, marginBottom: 8 },
+  input:       {
+    borderColor: '#FFD700',
     borderWidth: 1,
-    borderColor: '#DDD',
-    borderRadius: 4,
+    borderRadius: 5,
+    padding: 8,
     marginBottom: 16,
+    backgroundColor: '#fff',
   },
-  dropdown: {
-    marginBottom: 16,
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#DDD',
+  picker:      { marginBottom: 16, zIndex: 1000 },
+  card:        {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 5,
+    marginVertical: 6,
   },
-  exerciseTable: {
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  tableHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 10,
-    backgroundColor: "#FFD700",
-  },
-  tableHeaderText: {
-    fontWeight: "bold",
-    fontSize: 14,
-    color: "#000",
-    flex: 1,
-    textAlign: "center",
-  },
-  tableRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#DDD",
-  },
-  tableCellText: {
-    fontSize: 14,
-    color: "#333",
-    flex: 1,
-    textAlign: "center",
-  },
-  addButton: {
-    marginBottom: 16,
-    backgroundColor: '#007BFF',
-  },
-  saveButton: {
-    backgroundColor: '#FFD700',
-  },
+  remove:      { color: '#FF4D4D', fontSize: 18 },
+  saveBtn:     { marginTop: 30 },
 });
-
-export default EditRoutineScreen;
