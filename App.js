@@ -1,31 +1,32 @@
-// App.js
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator }  from '@react-navigation/stack';
-import { Provider as PaperProvider } from 'react-native-paper';
-import { Icon } from 'react-native-elements';
+import { createBottomTabNavigator }  from '@react-navigation/bottom-tabs';
+import { createStackNavigator }       from '@react-navigation/stack';
+import { Provider as PaperProvider }  from 'react-native-paper';
+import { Icon }                      from 'react-native-elements';
 
-import HomeScreen from './src/screens/home/HomeScreen';
-import EserciziScreen from './src/screens/exercises/EserciziScreen';
-import CreateExerciseScreen from './src/screens/exercises/CreateExerciseScreen';
-import ExerciseDetailScreen from './src/screens/exercises/ExerciseDetailScreen';
-import CreateRoutineScreen from './src/screens/routines/CreateRoutineScreen';
-import ViewRoutineScreen from './src/screens/routines/ViewRoutineScreen';
-import EditRoutineScreen from './src/screens/routines/EditRoutineScreen';
-import ProgressScreen from './src/screens/progress/ProgressScreen';
+import HomeScreen            from './src/screens/home/HomeScreen';
+import EserciziScreen        from './src/screens/exercises/EserciziScreen';
+import CreateExerciseScreen  from './src/screens/exercises/CreateExerciseScreen';
+import ExerciseDetailScreen  from './src/screens/exercises/ExerciseDetailScreen';
+import CreateRoutineScreen   from './src/screens/routines/CreateRoutineScreen';
+import ViewRoutineScreen     from './src/screens/routines/ViewRoutineScreen';
+import EditRoutineScreen     from './src/screens/routines/EditRoutineScreen';
+import ProgressScreen        from './src/screens/progress/ProgressScreen';
+import ManageProgressScreen  from './src/screens/progress/ManageProgressScreen';
 
 const Tab   = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
+// Stack de Rutinas
 function RutinasStack() {
   return (
     <Stack.Navigator
       initialRouteName="Home"
       screenOptions={{
-        headerStyle:     { backgroundColor: '#FFD700' },
-        headerTintColor: '#fff',
-        headerTitleAlign:'center',
+        headerStyle:      { backgroundColor: '#FFD700' },
+        headerTintColor:  '#fff',
+        headerTitleAlign: 'center',
       }}
     >
       <Stack.Screen
@@ -67,13 +68,36 @@ function RutinasStack() {
   );
 }
 
+// Stack de Progreso (incluye gestión)
+function ProgresoStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen
+        name="ProgresoMain"
+        component={ProgressScreen}
+      />
+      <Stack.Screen
+        name="ManageProgress"
+        component={ManageProgressScreen}
+        options={{
+          headerShown:      true,
+          headerStyle:      { backgroundColor: '#FFD700' },
+          headerTintColor:  '#fff',
+          headerTitleAlign: 'center',
+          title:            'Gestionar progreso',
+        }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 export default function App() {
   return (
     <PaperProvider>
       <NavigationContainer>
         <Tab.Navigator
           screenOptions={({ route }) => ({
-            headerShown:       false,
+            headerShown:           false,
             tabBarActiveTintColor:   '#FFD700',
             tabBarInactiveTintColor: 'gray',
             tabBarIcon: ({ color, size }) => {
@@ -81,7 +105,14 @@ export default function App() {
                 Rutinas:  'format-list-bulleted',
                 Progreso: 'show-chart',
               };
-              return <Icon name={icons[route.name]} type="material" color={color} size={size} />;
+              return (
+                <Icon
+                  name={icons[route.name]}
+                  type="material"
+                  color={color}
+                  size={size}
+                />
+              );
             },
           })}
         >
@@ -92,7 +123,7 @@ export default function App() {
           />
           <Tab.Screen
             name="Progreso"
-            component={ProgressScreen}
+            component={ProgresoStack}
             options={{ title: 'Progreso' }}
           />
         </Tab.Navigator>

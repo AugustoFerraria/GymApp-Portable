@@ -1,3 +1,5 @@
+// src/screens/progress/ProgressScreen.js
+
 import React, { useState } from 'react';
 import {
   View,
@@ -7,30 +9,35 @@ import {
   Button,
   Alert,
   ScrollView,
-  Dimensions
+  Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { Icon } from 'react-native-elements';
 
 import {
   getExercises,
   getProgress,
-  addProgress
+  addProgress,
 } from '../../services/storageService';
 import ProgressChart from '../../components/ProgressChart';
 
-const screenWidth = Dimensions.get('window').width;
+const screenWidth = Dimensions.get('window').width - 40; // 20px padding each side
+const chartHeight = 300;
 
 export default function ProgressScreen() {
-  const [weight, setWeight]     = useState('');
-  const [reps, setReps]         = useState('');
-  const [exercises, setExercises]         = useState([]);
-  const [selectedExercise, setSelectedExercise] = useState('');
-  const [data, setData]         = useState([]);
-  const [isWeightMode, setIsWeightMode] = useState(true);
-  const [error, setError]       = useState('');
+  const navigation = useNavigation();
 
-  // Al ganar foco o cambiar ejercicio, recarga ejercicios y progresos
+  const [weight, setWeight]                 = useState('');
+  const [reps, setReps]                     = useState('');
+  const [exercises, setExercises]           = useState([]);
+  const [selectedExercise, setSelectedExercise] = useState('');
+  const [data, setData]                     = useState([]);
+  const [isWeightMode, setIsWeightMode]     = useState(true);
+  const [error, setError]                   = useState('');
+
+  // reload on focus or when selectedExercise changes
   useFocusEffect(
     React.useCallback(() => {
       (async () => {
@@ -53,15 +60,15 @@ export default function ProgressScreen() {
   );
 
   const handleAdd = async () => {
-    const value = isWeightMode ? parseFloat(weight) : parseInt(reps, 10);
-    if (isNaN(value) || !selectedExercise) {
+    const val = isWeightMode ? parseFloat(weight) : parseInt(reps, 10);
+    if (isNaN(val) || !selectedExercise) {
       Alert.alert('Por favor ingresa un valor válido y selecciona un ejercicio.');
       return;
     }
     try {
       const entry = {
         date: new Date().toISOString(),
-        ...(isWeightMode ? { weight: value } : { reps: value }),
+        ...(isWeightMode ? { weight: val } : { reps: val }),
       };
       const updated = await addProgress(selectedExercise, entry);
       setData(updated);
@@ -73,6 +80,19 @@ export default function ProgressScreen() {
       setError('Error al guardar los datos');
     }
   };
+
+  // render header with right‑aligned button
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <Text style={styles.headerTitle}>Progreso</Text>
+      <TouchableOpacity
+        style={styles.headerButton}
+        onPress={() => navigation.navigate('ManageProgress')}
+      >
+        <Icon name="edit" type="material" color="#fff" />
+      </TouchableOpacity>
+    </View>
+  );
 
   const renderChart = () => {
     if (!data.length) {
@@ -88,13 +108,9 @@ export default function ProgressScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Marco amarillo superior */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Progreso</Text>
-      </View>
+      {renderHeader()}
 
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Selector de ejercicio */}
         <Picker
           selectedValue={selectedExercise}
           style={styles.picker}
@@ -106,7 +122,6 @@ export default function ProgressScreen() {
           ))}
         </Picker>
 
-        {/* Input para peso o repeticiones */}
         <TextInput
           style={styles.input}
           placeholder={isWeightMode ? 'Peso (kg)' : 'Repeticiones'}
@@ -123,10 +138,8 @@ export default function ProgressScreen() {
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-        {/* Gráfico de progreso */}
         {renderChart()}
 
-        {/* Toggle peso / repeticiones */}
         <View style={styles.toggleContainer}>
           <Button
             title="Peso"
@@ -146,50 +159,55 @@ export default function ProgressScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex:             1,
     backgroundColor: '#fff',
   },
   header: {
-    height: 100,
+    height:           110,
     backgroundColor: '#FFD700',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection:    'row',
+    alignItems:       'center',
+    paddingHorizontal:16,
   },
   headerTitle: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
+    flex:       1,
+    fontSize:   20,
+    fontWeight:'bold',
+    color:     '#fff',
+  },
+  headerButton: {
+    padding:    8,
   },
   content: {
-    padding: 16,
+    padding:       16,
     paddingBottom: 32,
   },
   picker: {
-    height: 50,
-    backgroundColor: '#fff',
-    marginBottom: 16,
+    height:         50,
+    backgroundColor:'#fff',
+    marginBottom:   16,
   },
   input: {
     borderBottomWidth: 1,
     borderBottomColor: '#000',
-    padding: 8,
-    marginBottom: 16,
-    fontSize: 18,
-    backgroundColor: '#fff',
+    padding:           8,
+    marginBottom:      16,
+    fontSize:          18,
+    backgroundColor:   '#fff',
   },
   noDataText: {
-    textAlign: 'center',
-    color: '#666',
+    textAlign:      'center',
+    color:         '#666',
     marginVertical: 16,
   },
   errorText: {
-    color: 'red',
-    textAlign: 'center',
+    color:       'red',
+    textAlign:  'center',
     marginBottom: 16,
   },
   toggleContainer: {
-    flexDirection: 'row',
+    flexDirection:  'row',
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop:      16,
   },
 });

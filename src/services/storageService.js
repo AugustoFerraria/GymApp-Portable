@@ -1,5 +1,3 @@
-// src/services/storageService.js
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EXERCISES_KEY   = 'mis_ejercicios';
@@ -28,7 +26,7 @@ export async function saveRoutine(routine) {
   await AsyncStorage.setItem(ROUTINES_KEY, JSON.stringify(arr));
 }
 
-// — Progresos (global) —
+// — Progresos globales —
 export async function getProgresses() {
   const json = await AsyncStorage.getItem(PROGRESSES_KEY);
   return json ? JSON.parse(json) : [];
@@ -39,14 +37,50 @@ export async function saveProgress(progress) {
   await AsyncStorage.setItem(PROGRESSES_KEY, JSON.stringify(arr));
 }
 
-// — Funciones para ProgressScreen —
-// Obtiene sólo los progresos de un ejercicio dado
-export async function getProgressesByExercise(exerciseId) {
+// — Para ProgressScreen —
+export async function getProgress(exerciseId) {
   const all = await getProgresses();
   return all.filter(p => p.exerciseId === exerciseId);
 }
-// Agrega un progreso y devuelve el arreglo actualizado para ese ejercicio
-export async function addProgress(progress) {
+export async function addProgress(exerciseId, entry) {
+  const progress = { exerciseId, ...entry };
   await saveProgress(progress);
-  return getProgressesByExercise(progress.exerciseId);
+  return getProgress(exerciseId);
+}
+
+// — Nuevas funciones para ManageProgressScreen —
+
+// Elimina un progreso concreto (coincidiendo por ejercicioId + date + valor)
+export async function deleteProgress(progressEntry) {
+  const all = await getProgresses();
+  const filtered = all.filter(p => {
+    if (p.exerciseId !== progressEntry.exerciseId) return true;
+    if (p.date !== progressEntry.date) return true;
+    // comparar peso/reps
+    if (progressEntry.weight != null) {
+      return p.weight !== progressEntry.weight;
+    } else {
+      return p.reps !== progressEntry.reps;
+    }
+  });
+  await AsyncStorage.setItem(PROGRESSES_KEY, JSON.stringify(filtered));
+  return filtered;
+}
+
+// Actualiza un progreso concreto (mantiene la misma date, cambia peso/reps)
+export async function updateProgress(progressEntry, newValues) {
+  const all = await getProgresses();
+  const updatedAll = all.map(p => {
+    if (
+      p.exerciseId === progressEntry.exerciseId &&
+      p.date === progressEntry.date &&
+      ((progressEntry.weight != null && p.weight === progressEntry.weight) ||
+       (progressEntry.reps   != null && p.reps   === progressEntry.reps))
+    ) {
+      return { ...p, ...newValues };
+    }
+    return p;
+  });
+  await AsyncStorage.setItem(PROGRESSES_KEY, JSON.stringify(updatedAll));
+  return updatedAll;
 }
