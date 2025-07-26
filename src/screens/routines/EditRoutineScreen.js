@@ -5,7 +5,6 @@ import {
   Text,
   TextInput,
   Button,
-  ScrollView,
   StyleSheet,
   Alert,
   TouchableOpacity,
@@ -30,13 +29,15 @@ export default function EditRoutineScreen({ route, navigation }) {
 
   useEffect(() => {
     (async () => {
+      // cargamos lista de ejercicios para el dropdown
       const exArr = await getExercises();
       setAllExercises(exArr.map(e => ({ label: e.name, value: e.id })));
 
+      // cargamos la rutina a editar
       const routines = await getRoutines();
       const rt = routines.find(r => r.id === routineId);
       if (!rt) {
-        Alert.alert('Error', 'Rutina no encontrada');
+        Alert.alert('Error','Rutina no encontrada');
         return navigation.goBack();
       }
       setNombre(rt.name);
@@ -47,15 +48,15 @@ export default function EditRoutineScreen({ route, navigation }) {
 
   const handleAddExercise = () => {
     if (!seleccion || !repsInput) {
-      return Alert.alert('Atención', 'Selecciona ejercicio y repeticiones');
+      return Alert.alert('Atención','Selecciona ejercicio y repeticiones');
     }
     if (routineExercises.some(e => e.id === seleccion)) {
-      return Alert.alert('Atención', 'Ejercicio ya agregado');
+      return Alert.alert('Atención','Ejercicio ya agregado');
     }
     const label = allExercises.find(e => e.value === seleccion)?.label || '';
     setRoutineExercises([
       ...routineExercises,
-      { id: seleccion, name: label, reps: parseInt(repsInput, 10) },
+      { id: seleccion, name: label, reps: parseInt(repsInput,10) }
     ]);
     setSeleccion(null);
     setRepsInput('');
@@ -67,7 +68,7 @@ export default function EditRoutineScreen({ route, navigation }) {
 
   const handleSave = async () => {
     if (!nombre.trim() || routineExercises.length === 0) {
-      return Alert.alert('Atención', 'Nombre y al menos un ejercicio son obligatorios');
+      return Alert.alert('Atención','Nombre y al menos un ejercicio son obligatorios');
     }
     const updated = {
       id:          routineId,
@@ -80,12 +81,20 @@ export default function EditRoutineScreen({ route, navigation }) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.label}>Nombre:</Text>
-      <TextInput style={styles.input} value={nombre} onChangeText={setNombre} />
+      <TextInput
+        style={styles.input}
+        value={nombre}
+        onChangeText={setNombre}
+      />
 
       <Text style={styles.label}>Descripción:</Text>
-      <TextInput style={styles.input} value={descripcion} onChangeText={setDescripcion} />
+      <TextInput
+        style={styles.input}
+        value={descripcion}
+        onChangeText={setDescripcion}
+      />
 
       <Text style={styles.label}>Agregar ejercicio:</Text>
       <DropDownPicker
@@ -105,7 +114,11 @@ export default function EditRoutineScreen({ route, navigation }) {
         onChangeText={setRepsInput}
       />
 
-      <Button title="＋ Agregar ejercicio" onPress={handleAddExercise} color="#FFD700" />
+      <Button
+        title="＋ Agregar ejercicio"
+        onPress={handleAddExercise}
+        color="#FFD700"
+      />
 
       {routineExercises.length > 0 && (
         <>
@@ -122,33 +135,30 @@ export default function EditRoutineScreen({ route, navigation }) {
       )}
 
       <View style={styles.saveBtn}>
-        <Button title="Guardar cambios" onPress={handleSave} color="#FFD700" />
+        <Button
+          title="Guardar cambios"
+          onPress={handleSave}
+          color="#FFD700"
+        />
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container:   { padding: 20 },
-  label:       { fontSize: 16, marginBottom: 8 },
-  input:       {
-    borderColor: '#FFD700',
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 8,
-    marginBottom: 16,
-    backgroundColor: '#fff',
+  container: { flex:1, padding:20 },
+  label:     { fontSize:16, marginBottom:8 },
+  input:     {
+    borderColor:'#FFD700', borderWidth:1,
+    borderRadius:5, padding:8, marginBottom:16,
+    backgroundColor:'#fff'
   },
-  picker:      { marginBottom: 16, zIndex: 1000 },
-  card:        {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 5,
-    marginVertical: 6,
+  picker:    { marginBottom:16, zIndex:1000 },
+  card:      {
+    flexDirection:'row', justifyContent:'space-between',
+    alignItems:'center', backgroundColor:'#fff',
+    padding:12, borderRadius:5, marginVertical:6,
   },
-  remove:      { color: '#FF4D4D', fontSize: 18 },
-  saveBtn:     { marginTop: 30 },
+  remove:    { color:'#FF4D4D', fontSize:18 },
+  saveBtn:   { marginTop:30 },
 });

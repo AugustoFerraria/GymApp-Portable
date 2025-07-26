@@ -93,3 +93,13 @@ export async function deleteRoutine(routineId) {
   await AsyncStorage.setItem(ROUTINES_KEY, JSON.stringify(filtered));
   return filtered;
 }
+
+export async function updateRoutine(updatedRoutine) {
+  const json = await AsyncStorage.getItem(ROUTINES_KEY);
+  const arr  = json ? JSON.parse(json) : [];
+  const newArr = arr.map(r =>
+    r.id === updatedRoutine.id ? updatedRoutine : r
+  );
+  await AsyncStorage.setItem(ROUTINES_KEY, JSON.stringify(newArr));
+  return newArr;
+}
