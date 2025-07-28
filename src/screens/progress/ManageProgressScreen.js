@@ -1,5 +1,4 @@
-// src/screens/progress/ManageProgressScreen.js
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -23,12 +22,12 @@ export default function ManageProgressScreen() {
   const [allProgresses, setAllProgresses] = useState([]);
   const [exercises, setExercises] = useState([]);
   const [selectedExercise, setSelectedExercise] = useState('');
-  const [filterMode, setFilterMode] = useState('all'); // 'all' | 'Peso' | 'Repeticiones'
   const [editingKey, setEditingKey] = useState(null);
-  const [editValue, setEditValue] = useState('');
+  const [editWeight, setEditWeight] = useState('');
+  const [editReps, setEditReps] = useState('');
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       (async () => {
         const progs = await getProgresses();
         setAllProgresses(progs);
@@ -38,13 +37,11 @@ export default function ManageProgressScreen() {
     }, [])
   );
 
-  const makeKey = (p) => `${p.exerciseId}__${p.date}__${p.weight ?? p.reps}`;
+  const makeKey = (p) => `${p.exerciseId}__${p.date}`;
+
   const displayed = allProgresses
     .filter((p) => !selectedExercise || p.exerciseId === selectedExercise)
-    .filter((p) => {
-      if (filterMode === 'all') return true;
-      return filterMode === 'Peso' ? p.weight != null : p.reps != null;
-    });
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const handleDelete = (item) => {
     Alert.alert(
@@ -65,27 +62,33 @@ export default function ManageProgressScreen() {
   };
 
   const handleEditStart = (item) => {
-    setEditingKey(makeKey(item));
-    setEditValue(String(item.weight ?? item.reps));
+    const key = makeKey(item);
+    setEditingKey(key);
+    setEditWeight(String(item.weight));
+    setEditReps(String(item.reps));
   };
 
   const handleEditSave = async (item) => {
-    const num = parseFloat(editValue);
-    if (isNaN(num)) {
-      Alert.alert('Valor inválido');
+    const w = parseFloat(editWeight);
+    if (editWeight.trim() === '' || isNaN(w)) {
+      Alert.alert('Atención', 'Debes ingresar un peso válido.');
       return;
     }
-    const newVals = item.weight != null ? { weight: num } : { reps: num };
-    const updated = await updateProgress(item, newVals);
-    setAllProgresses(updated);
+    const r = parseInt(editReps, 10);
+    if (editReps.trim() === '' || isNaN(r)) {
+      Alert.alert('Atención', 'Debes ingresar repeticiones válidas.');
+      return;
+    }
+    const updatedArr = await updateProgress(item, { weight: w, reps: r });
+    setAllProgresses(updatedArr);
     setEditingKey(null);
   };
 
   const renderItem = ({ item }) => {
     const key = makeKey(item);
-    const exName = exercises.find((e) => e.id === item.exerciseId)?.name || '—';
+    const exName =
+      exercises.find((e) => e.id === item.exerciseId)?.name || '—';
     const dateStr = new Date(item.date).toLocaleDateString();
-    const valStr = item.weight != null ? `${item.weight} kg` : `${item.reps} reps`;
     const isEd = editingKey === key;
 
     return (
@@ -94,14 +97,26 @@ export default function ManageProgressScreen() {
         <Text style={styles.sub}>{dateStr}</Text>
 
         {isEd ? (
-          <TextInput
-            style={styles.input}
-            value={editValue}
-            onChangeText={setEditValue}
-            keyboardType="numeric"
-          />
+          <>
+            <TextInput
+              style={styles.input}
+              value={editWeight}
+              onChangeText={setEditWeight}
+              keyboardType="numeric"
+              placeholder="Peso"
+            />
+            <TextInput
+              style={styles.input}
+              value={editReps}
+              onChangeText={setEditReps}
+              keyboardType="numeric"
+              placeholder="Repeticiones"
+            />
+          </>
         ) : (
-          <Text style={styles.value}>{valStr}</Text>
+          <Text style={styles.value}>
+            {item.weight} kg — {item.reps} reps
+          </Text>
         )}
 
         <View style={styles.actions}>
@@ -142,27 +157,6 @@ export default function ManageProgressScreen() {
             <Picker.Item key={e.id} label={e.name} value={e.id} />
           ))}
         </Picker>
-        <View style={styles.modeButtons}>
-          {['all', 'Peso', 'Repeticiones'].map((m) => (
-            <TouchableOpacity
-              key={m}
-              style={[
-                styles.modeBtn,
-                filterMode === m && styles.modeBtnActive,
-              ]}
-              onPress={() => setFilterMode(m)}
-            >
-              <Text
-                style={[
-                  styles.modeText,
-                  filterMode === m && styles.modeTextActive,
-                ]}
-              >
-                {m === 'all' ? 'Todos' : m}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
       </View>
 
       <FlatList
@@ -170,7 +164,9 @@ export default function ManageProgressScreen() {
         keyExtractor={(item) => makeKey(item)}
         contentContainerStyle={styles.list}
         renderItem={renderItem}
-        ListEmptyComponent={<Text style={styles.empty}>No hay registros que mostrar</Text>}
+        ListEmptyComponent={
+          <Text style={styles.empty}>No hay progresos</Text>
+        }
       />
     </View>
   );
@@ -180,16 +176,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   filters: { padding: 16, backgroundColor: '#f9f9f9' },
   picker: { height: 50, backgroundColor: '#fff', marginBottom: 8 },
-  modeButtons: { flexDirection: 'row', justifyContent: 'space-around' },
-  modeBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 4,
-    backgroundColor: '#ededed',
-  },
-  modeBtnActive: { backgroundColor: '#FFD700' },
-  modeText: { color: '#333' },
-  modeTextActive: { color: '#fff' },
   list: { padding: 16 },
   card: {
     backgroundColor: '#fff',
