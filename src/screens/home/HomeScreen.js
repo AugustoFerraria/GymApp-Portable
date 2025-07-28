@@ -1,4 +1,3 @@
-// src/screens/home/HomeScreen.js
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   FlatList,
@@ -16,12 +15,6 @@ import { getRoutines, deleteRoutine } from '../../services/storageService';
 import Background from '../../components/Background';
 import { Icon } from 'react-native-elements';
 
-// Habilitar animaciones en Android (legacy)
-if (Platform.OS === 'android') {
-  UIManager.setLayoutAnimationEnabledExperimental?.(true);
-}
-
-// Componente de tarjeta con animación propia
 function RoutineCard({ item, expanded, onToggle, navigation, onDelete }) {
   const animation = useRef(new Animated.Value(expanded ? 1 : 0)).current;
 
@@ -40,7 +33,7 @@ function RoutineCard({ item, expanded, onToggle, navigation, onDelete }) {
 
   const height = animation.interpolate({
     inputRange: [0, 0.78],
-    outputRange: [0, 140], // altura aproximada del menú
+    outputRange: [0, 140],
   });
 
   const opacity = animation;
@@ -66,10 +59,7 @@ function RoutineCard({ item, expanded, onToggle, navigation, onDelete }) {
       </TouchableOpacity>
 
       <Animated.View
-        style={[
-          styles.menu,
-          { height, opacity, overflow: 'hidden' },
-        ]}
+        style={[styles.menu, { height, opacity, overflow: 'hidden' }]}
       >
         <TouchableOpacity
           style={[styles.menuButton, styles.viewButton]}
@@ -184,8 +174,8 @@ export default function HomeScreen() {
           },
           {
             icon: 'dumbbell',
-            label: 'Nuevo ejercicio',
-            onPress: () => navigation.navigate('CrearEjercicio'),
+            label: 'Ejercicios',
+            onPress: () => navigation.navigate('ManageExercises'),
           },
         ]}
         onStateChange={({ open }) => setFabOpen(open)}
@@ -195,71 +185,21 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: {
-    padding: 16,
-  },
-  emptyList: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  cardContainer: {
-    marginBottom: 12,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    elevation: 2,
-  },
-  cardExpanded: {
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  name: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  desc: {
-    marginTop: 4,
-    color: '#666',
-  },
-  menu: {
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
-  },
-  menuButton: {
-    paddingVertical: 18,
-    borderRadius: 6,
-    alignSelf: 'stretch',
-    paddingHorizontal: 16,
-  },
-  viewButton: {},
-  editButton: {
-    backgroundColor: 'rgba(0,122,255,0.1)',
-  },
-  deleteButton: {
-    backgroundColor: 'rgba(255,77,77,0.1)',
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  menuIcon: {
-    marginRight: 8,
-  },
-  menuText: {
-    fontSize: 16,
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#666',
-    marginTop: 32,
-  },
+  list:         { padding: 16 },
+  emptyList:    { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16 },
+  cardContainer:{ marginBottom: 12 },
+  card:         { backgroundColor: '#fff', borderRadius: 8, padding: 16, elevation: 2 },
+  cardExpanded: { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
+  cardHeader:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  name:         { fontSize: 18, fontWeight: '600' },
+  desc:         { marginTop: 4, color: '#666' },
+  menu:         { backgroundColor: '#f9f9f9', borderRadius: 8 },
+  menuButton:   { paddingVertical: 18, borderRadius: 6, alignSelf: 'stretch', paddingHorizontal: 16 },
+  viewButton:   {},
+  editButton:   { backgroundColor: 'rgba(0,122,255,0.1)' },
+  deleteButton: { backgroundColor: 'rgba(255,77,77,0.1)' },
+  menuItem:     { flexDirection: 'row', alignItems: 'center' },
+  menuIcon:     { marginRight: 8 },
+  menuText:     { fontSize: 16 },
+  emptyText:    { textAlign: 'center', color: '#666', marginTop: 32 },
 });

@@ -6,15 +6,17 @@ import { createStackNavigator }       from '@react-navigation/stack';
 import { Provider as PaperProvider }  from 'react-native-paper';
 import { Icon }                      from 'react-native-elements';
 
-import HomeScreen            from './src/screens/home/HomeScreen';
-import CreateRoutineScreen   from './src/screens/routines/CreateRoutineScreen';
-import ViewRoutineScreen     from './src/screens/routines/ViewRoutineScreen';
-import EditRoutineScreen     from './src/screens/routines/EditRoutineScreen';
-import EserciziScreen        from './src/screens/exercises/EserciziScreen';
-import CreateExerciseScreen  from './src/screens/exercises/CreateExerciseScreen';
-import ExerciseDetailScreen  from './src/screens/exercises/ExerciseDetailScreen';
-import ProgressScreen        from './src/screens/progress/ProgressScreen';
-import ManageProgressScreen  from './src/screens/progress/ManageProgressScreen';
+import HomeScreen               from './src/screens/home/HomeScreen';
+import CreateRoutineScreen      from './src/screens/routines/CreateRoutineScreen';
+import ViewRoutineScreen        from './src/screens/routines/ViewRoutineScreen';
+import EditRoutineScreen        from './src/screens/routines/EditRoutineScreen';
+import EserciziScreen           from './src/screens/exercises/EserciziScreen';
+import CreateExerciseScreen     from './src/screens/exercises/CreateExerciseScreen';
+import ExerciseDetailScreen     from './src/screens/exercises/ExerciseDetailScreen';
+import ManageProgressScreen     from './src/screens/progress/ManageProgressScreen';
+import ProgressScreen           from './src/screens/progress/ProgressScreen';
+import ManageExercisesScreen    from './src/screens/exercises/ManageExercisesScreen';
+import EditExerciseScreen       from './src/screens/exercises/EditExerciseScreen';
 
 const Tab   = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -29,13 +31,51 @@ function RutinasStack() {
         headerTitleAlign: 'center',
       }}
     >
-      <Stack.Screen name="Home"           component={HomeScreen}           options={{ title: 'Mis Rutinas' }} />
-      <Stack.Screen name="CrearRutina"    component={CreateRoutineScreen}  options={{ title: 'Nueva rutina' }} />
-      <Stack.Screen name="VerRutina"      component={ViewRoutineScreen}    options={{ title: 'Ver rutina' }} />
-      <Stack.Screen name="EditarRutina"   component={EditRoutineScreen}    options={{ title: 'Editar rutina' }} />
-      <Stack.Screen name="Ejercicios"     component={EserciziScreen}       options={{ title: 'Ejercicios' }} />
-      <Stack.Screen name="CrearEjercicio" component={CreateExerciseScreen} options={{ title: 'Nuevo ejercicio' }} />
-      <Stack.Screen name="DetalleEjercicio" component={ExerciseDetailScreen} options={{ title: 'Detalle ejercicio' }} />
+      <Stack.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ title: 'Mis Rutinas' }}
+      />
+      <Stack.Screen
+        name="CrearRutina"
+        component={CreateRoutineScreen}
+        options={{ title: 'Nueva rutina' }}
+      />
+      <Stack.Screen
+        name="VerRutina"
+        component={ViewRoutineScreen}
+        options={{ title: 'Ver rutina' }}
+      />
+      <Stack.Screen
+        name="EditarRutina"
+        component={EditRoutineScreen}
+        options={{ title: 'Editar rutina' }}
+      />
+      <Stack.Screen
+        name="Ejercicios"
+        component={EserciziScreen}
+        options={{ title: 'Ejercicios' }}
+      />
+      <Stack.Screen
+        name="CrearEjercicio"
+        component={CreateExerciseScreen}
+        options={{ title: 'Nuevo ejercicio' }}
+      />
+      <Stack.Screen
+        name="ManageExercises"
+        component={ManageExercisesScreen}
+        options={{ title: 'Ejercicios' }}
+      />
+      <Stack.Screen
+        name="EditExercise"
+        component={EditExerciseScreen}
+        options={{ title: 'Editar ejercicio' }}
+      />
+      <Stack.Screen
+        name="DetalleEjercicio"
+        component={ExerciseDetailScreen}
+        options={{ title: 'Detalle ejercicio' }}
+      />
     </Stack.Navigator>
   );
 }
@@ -74,8 +114,16 @@ export default function App() {
             },
           })}
         >
-          <Tab.Screen name="Rutinas"  component={RutinasStack}  options={{ title: 'Rutinas' }} />
-          <Tab.Screen name="Progreso" component={ProgresoStack} options={{ title: 'Progreso' }} />
+          <Tab.Screen
+            name="Rutinas"
+            component={RutinasStack}
+            options={{ title: 'Rutinas' }}
+          />
+          <Tab.Screen
+            name="Progreso"
+            component={ProgresoStack}
+            options={{ title: 'Progreso' }}
+          />
         </Tab.Navigator>
       </NavigationContainer>
     </PaperProvider>

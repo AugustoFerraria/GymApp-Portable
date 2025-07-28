@@ -103,3 +103,19 @@ export async function updateRoutine(updatedRoutine) {
   await AsyncStorage.setItem(ROUTINES_KEY, JSON.stringify(newArr));
   return newArr;
 }
+
+// Borrar un ejercicio por id
+export async function deleteExercise(exerciseId) {
+  const arr = await getExercises();
+  const filtered = arr.filter(e => e.id !== exerciseId);
+  await AsyncStorage.setItem(EXERCISES_KEY, JSON.stringify(filtered));
+  return filtered;
+}
+
+// Actualizar un ejercicio existente
+export async function updateExercise(updated) {
+  const arr = await getExercises();
+  const newArr = arr.map(e => e.id === updated.id ? updated : e);
+  await AsyncStorage.setItem(EXERCISES_KEY, JSON.stringify(newArr));
+  return newArr;
+}
