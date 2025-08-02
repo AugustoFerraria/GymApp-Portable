@@ -22,7 +22,8 @@
     "android": {
       "package": "com.augusto_ferraria.personalroutines",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundImage": "./assets/adaptive-icon-bg.png"
       }
     },
     "web": {
