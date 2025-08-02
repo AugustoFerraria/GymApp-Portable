@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// src/screens/routines/CreateRoutineScreen.js
+import React, { useState, useLayoutEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,42 +11,62 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getExercises, saveRoutine } from '../../services/storageService';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { Icon } from 'react-native-elements';
+import {
+  getExercises,
+  saveRoutine
+} from '../../services/storageService';
 
 export default function CreateRoutineScreen({ navigation }) {
-  const [nombre, setNombre]                   = useState('');
-  const [descripcion, setDescripcion]         = useState('');
-  const [allExercises, setAllExercises]       = useState([]);
-  const [dropdownOpen, setDropdownOpen]       = useState(false);
-  const [seleccion, setSeleccion]             = useState(null);
-  const [repsInput, setRepsInput]             = useState('');
+  const [nombre, setNombre]                     = useState('');
+  const [descripcion, setDescripcion]           = useState('');
+  const [allExercises, setAllExercises]         = useState([]);
+  const [dropdownOpen, setDropdownOpen]         = useState(false);
+  const [seleccion, setSeleccion]               = useState(null);
+  const [repsInput, setRepsInput]               = useState('');
   const [routineExercises, setRoutineExercises] = useState([]);
 
-  useEffect(() => {
-    (async () => {
-      const arr = await getExercises();
-      // DropDownPicker espera items { label, value }
-      setAllExercises(arr.map(e => ({ label: e.name, value: e.id })));
-    })();
-  }, []);
+  // 1) Botón "+" en el header para crear ejercicio
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Icon
+          name="add"
+          type="material"
+          color="#fff"
+          size={28}
+          containerStyle={{ marginRight: 16 }}
+          onPress={() => navigation.navigate('CrearEjercicio')}
+        />
+      ),
+    });
+  }, [navigation]);
+
+  // 2) Cargar ejercicios siempre que la pantalla gana foco
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        const arr = await getExercises();
+        setAllExercises(arr.map(e => ({ label: e.name, value: e.id })));
+      })();
+    }, [])
+  );
 
   const handleAddExercise = () => {
     if (!seleccion || !repsInput) {
       Alert.alert('Atención', 'Selecciona ejercicio y especifica repeticiones.');
       return;
     }
-    const exists = routineExercises.find(e => e.id === seleccion);
-    if (exists) {
+    if (routineExercises.some(e => e.id === seleccion)) {
       Alert.alert('Atención', 'Ya agregaste ese ejercicio.');
       return;
     }
-    const exLabel = allExercises.find(e => e.value === seleccion)?.label || '';
+    const label = allExercises.find(e => e.value === seleccion)?.label || '';
     setRoutineExercises([
       ...routineExercises,
-      { id: seleccion, name: exLabel, reps: parseInt(repsInput, 10) },
+      { id: seleccion, name: label, reps: parseInt(repsInput, 10) },
     ]);
-    // limpiar selección
     setSeleccion(null);
     setRepsInput('');
   };
@@ -63,14 +84,9 @@ export default function CreateRoutineScreen({ navigation }) {
       id: Date.now().toString(),
       name: nombre.trim(),
       description: descripcion.trim(),
-      exercises: routineExercises, // [{id,name,reps}, ...]
+      exercises: routineExercises,
     };
     await saveRoutine(nueva);
-    // guardar detalles para EserciziScreen
-    await AsyncStorage.setItem(
-      `routine-${nueva.id}`,
-      JSON.stringify({ exercises: routineExercises })
-    );
     navigation.goBack();
   };
 
@@ -79,7 +95,7 @@ export default function CreateRoutineScreen({ navigation }) {
       <Text style={styles.label}>Nombre de la rutina:</Text>
       <TextInput
         style={styles.input}
-        placeholder="Ej. Dia de pecho"
+        placeholder="Ej. Día de pecho"
         placeholderTextColor="#666"
         value={nombre}
         onChangeText={setNombre}
@@ -113,12 +129,17 @@ export default function CreateRoutineScreen({ navigation }) {
         onChangeText={setRepsInput}
       />
 
-      <Button title="＋ Agregar a la rutina" onPress={handleAddExercise} color="#FFD700" />
+      <Button
+        title="＋ Agregar a la rutina"
+        onPress={handleAddExercise}
+        color="#FFD700"
+      />
 
-      {/* Lista de ejercicios añadidos */}
       {routineExercises.length > 0 && (
         <>
-          <Text style={[styles.label, { marginTop: 20 }]}>Ejercicios en rutina:</Text>
+          <Text style={[styles.label, { marginTop: 20 }]}>
+            Ejercicios en rutina:
+          </Text>
           {routineExercises.map(e => (
             <View key={e.id} style={styles.card}>
               <Text style={styles.cardText}>
@@ -141,20 +162,20 @@ export default function CreateRoutineScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { padding: 20 },
-  label:    { fontSize: 16, marginVertical: 8 },
+  label:     { fontSize: 16, marginVertical: 8 },
   input: {
-    borderColor:   '#FFD700',
-    borderWidth:   1,
-    borderRadius:  5,
-    padding:       8,
-    marginBottom: 16,
-    backgroundColor: '#fff',
+    borderColor:      '#FFD700',
+    borderWidth:      1,
+    borderRadius:     5,
+    padding:          8,
+    marginBottom:     16,
+    backgroundColor:  '#fff',
   },
-  picker: { marginBottom: 16, zIndex: 1000 },
+  picker:       { marginBottom: 16, zIndex: 1000 },
   card: {
     flexDirection:   'row',
     alignItems:      'center',
-    justifyContent: 'space-between',
+    justifyContent:  'space-between',
     backgroundColor: '#fff',
     borderRadius:    5,
     padding:         12,
@@ -163,5 +184,5 @@ const styles = StyleSheet.create({
   },
   cardText: { fontSize: 16 },
   remove:   { color: '#FF4D4D', fontSize: 18 },
-  createBtn: { marginTop: 30 },
+  createBtn:{ marginTop: 30 },
 });
