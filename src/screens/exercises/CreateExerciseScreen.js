@@ -25,12 +25,14 @@ const CreateExerciseScreen = ({ navigation, route }) => {
     <View style={styles.container}>
       <TextInput
         placeholder="Nombre del ejercicio"
+        placeholderTextColor="#666"
         value={nombre}
         onChangeText={setNombre}
         style={styles.input}
       />
       <TextInput
         placeholder="Descripción (opcional)"
+        placeholderTextColor="#666"
         value={descripcion}
         onChangeText={setDescripcion}
         style={styles.input}
