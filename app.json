@@ -1,8 +1,9 @@
 {
   "expo": {
-    "name": "Personal Routines Frontend",
-    "slug": "personalroutinesfrontend",
+    "name": "Personal Routines",
+    "slug": "personalroutines",
     "version": "1.0.0",
+    "sdkVersion": "53.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -18,10 +19,16 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.augusto_ferraria.personalroutines"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "43051a9c-5bd7-46b9-b1fa-87ad783b3615"
+      }
     }
   }
 }
