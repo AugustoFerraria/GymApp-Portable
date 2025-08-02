@@ -108,6 +108,7 @@ export default function ProgressScreen() {
         <TextInput
           style={styles.input}
           placeholder="Peso (kg)"
+          placeholderTextColor="#666"
           keyboardType="numeric"
           value={weight}
           onChangeText={setWeight}
@@ -115,6 +116,7 @@ export default function ProgressScreen() {
         <TextInput
           style={styles.input}
           placeholder="Repeticiones"
+          placeholderTextColor="#666"
           keyboardType="numeric"
           value={reps}
           onChangeText={setReps}

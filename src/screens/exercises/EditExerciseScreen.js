@@ -28,12 +28,14 @@ export default function EditExerciseScreen({ route, navigation }) {
     <View style={styles.container}>
       <TextInput
         placeholder="Nombre"
+        placeholderTextColor="#666"
         value={name}
         onChangeText={setName}
         style={styles.input}
       />
       <TextInput
         placeholder="Descripción (opcional)"
+        placeholderTextColor="#666"
         value={description}
         onChangeText={setDesc}
         style={styles.input}

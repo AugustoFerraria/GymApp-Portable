@@ -109,6 +109,7 @@ export default function EditRoutineScreen({ route, navigation }) {
       <TextInput
         style={styles.input}
         placeholder="Repeticiones"
+        placeholderTextColor="#666"
         keyboardType="numeric"
         value={repsInput}
         onChangeText={setRepsInput}

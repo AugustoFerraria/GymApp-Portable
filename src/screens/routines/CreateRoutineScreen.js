@@ -79,7 +79,8 @@ export default function CreateRoutineScreen({ navigation }) {
       <Text style={styles.label}>Nombre de la rutina:</Text>
       <TextInput
         style={styles.input}
-        placeholder="Ej. Pierna intensa"
+        placeholder="Ej. Dia de pecho"
+        placeholderTextColor="#666"
         value={nombre}
         onChangeText={setNombre}
       />
@@ -88,6 +89,7 @@ export default function CreateRoutineScreen({ navigation }) {
       <TextInput
         style={styles.input}
         placeholder="Detalles..."
+        placeholderTextColor="#666"
         value={descripcion}
         onChangeText={setDescripcion}
       />
@@ -105,6 +107,7 @@ export default function CreateRoutineScreen({ navigation }) {
       <TextInput
         style={styles.input}
         placeholder="Repeticiones"
+        placeholderTextColor="#666"
         keyboardType="numeric"
         value={repsInput}
         onChangeText={setRepsInput}

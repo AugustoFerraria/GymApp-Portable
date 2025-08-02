@@ -104,6 +104,7 @@ export default function ManageProgressScreen() {
               onChangeText={setEditWeight}
               keyboardType="numeric"
               placeholder="Peso"
+              placeholderTextColor="#666"
             />
             <TextInput
               style={styles.input}
@@ -111,6 +112,7 @@ export default function ManageProgressScreen() {
               onChangeText={setEditReps}
               keyboardType="numeric"
               placeholder="Repeticiones"
+              placeholderTextColor="#666"
             />
           </>
         ) : (
