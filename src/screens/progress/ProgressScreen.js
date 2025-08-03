@@ -96,8 +96,9 @@ export default function ProgressScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Picker
           selectedValue={selectedExercise}
-          style={styles.picker}
+          style={[styles.picker, { color: '#000' }]}
           onValueChange={setSelectedExercise}
+          dropdownIconColor="#000"
         >
           <Picker.Item label="Selecciona ejercicio" value="" />
           {exercises.map((ex) => (
@@ -170,7 +171,7 @@ const styles = StyleSheet.create({
   },
   headerButton: { padding: 8 },
   content: { padding: 16, paddingBottom: 32 },
-  picker: { height: 50, backgroundColor: '#fff', marginBottom: 16 },
+  picker: { height: 50, backgroundColor: '#fff', marginBottom: 16, color: '#000' },
   input: {
     borderBottomWidth: 1,
     borderBottomColor: '#000',
