@@ -1,5 +1,5 @@
 // App.js
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator }  from '@react-navigation/bottom-tabs';
 import { createStackNavigator }       from '@react-navigation/stack';
@@ -13,10 +13,12 @@ import EditRoutineScreen        from './src/screens/routines/EditRoutineScreen';
 import EserciziScreen           from './src/screens/exercises/EserciziScreen';
 import CreateExerciseScreen     from './src/screens/exercises/CreateExerciseScreen';
 import ExerciseDetailScreen     from './src/screens/exercises/ExerciseDetailScreen';
-import ManageProgressScreen     from './src/screens/progress/ManageProgressScreen';
-import ProgressScreen           from './src/screens/progress/ProgressScreen';
 import ManageExercisesScreen    from './src/screens/exercises/ManageExercisesScreen';
 import EditExerciseScreen       from './src/screens/exercises/EditExerciseScreen';
+import ProgressScreen           from './src/screens/progress/ProgressScreen';
+import ManageProgressScreen     from './src/screens/progress/ManageProgressScreen';
+
+import { getExercises }         from './src/services/storageService';
 
 const Tab   = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -31,51 +33,15 @@ function RutinasStack() {
         headerTitleAlign: 'center',
       }}
     >
-      <Stack.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{ title: 'Mis Rutinas' }}
-      />
-      <Stack.Screen
-        name="CrearRutina"
-        component={CreateRoutineScreen}
-        options={{ title: 'Nueva rutina' }}
-      />
-      <Stack.Screen
-        name="VerRutina"
-        component={ViewRoutineScreen}
-        options={{ title: 'Ver rutina' }}
-      />
-      <Stack.Screen
-        name="EditarRutina"
-        component={EditRoutineScreen}
-        options={{ title: 'Editar rutina' }}
-      />
-      <Stack.Screen
-        name="Ejercicios"
-        component={EserciziScreen}
-        options={{ title: 'Ejercicios' }}
-      />
-      <Stack.Screen
-        name="CrearEjercicio"
-        component={CreateExerciseScreen}
-        options={{ title: 'Nuevo ejercicio' }}
-      />
-      <Stack.Screen
-        name="ManageExercises"
-        component={ManageExercisesScreen}
-        options={{ title: 'Ejercicios' }}
-      />
-      <Stack.Screen
-        name="EditExercise"
-        component={EditExerciseScreen}
-        options={{ title: 'Editar ejercicio' }}
-      />
-      <Stack.Screen
-        name="DetalleEjercicio"
-        component={ExerciseDetailScreen}
-        options={{ title: 'Detalle ejercicio' }}
-      />
+      <Stack.Screen name="Home"           component={HomeScreen}            options={{ title: 'Mis Rutinas' }} />
+      <Stack.Screen name="CrearRutina"    component={CreateRoutineScreen}   options={{ title: 'Nueva rutina' }} />
+      <Stack.Screen name="VerRutina"      component={ViewRoutineScreen}     options={{ title: 'Ver rutina' }} />
+      <Stack.Screen name="EditarRutina"   component={EditRoutineScreen}     options={{ title: 'Editar rutina' }} />
+      <Stack.Screen name="Ejercicios"     component={EserciziScreen}        options={{ title: 'Ejercicios' }} />
+      <Stack.Screen name="CrearEjercicio" component={CreateExerciseScreen}  options={{ title: 'Nuevo ejercicio' }} />
+      <Stack.Screen name="ManageExercises" component={ManageExercisesScreen} options={{ title: 'Ejercicios' }} />
+      <Stack.Screen name="EditExercise"   component={EditExerciseScreen}    options={{ title: 'Editar ejercicio' }} />
+      <Stack.Screen name="DetalleEjercicio" component={ExerciseDetailScreen} options={{ title: 'Detalle ejercicio' }} />
     </Stack.Navigator>
   );
 }
@@ -100,6 +66,11 @@ function ProgresoStack() {
 }
 
 export default function App() {
+  // Sembrar ejercicios por defecto al inicio
+  useEffect(() => {
+    getExercises();
+  }, []);
+
   return (
     <PaperProvider>
       <NavigationContainer>
@@ -114,16 +85,8 @@ export default function App() {
             },
           })}
         >
-          <Tab.Screen
-            name="Rutinas"
-            component={RutinasStack}
-            options={{ title: 'Rutinas' }}
-          />
-          <Tab.Screen
-            name="Progreso"
-            component={ProgresoStack}
-            options={{ title: 'Progreso' }}
-          />
+          <Tab.Screen name="Rutinas"  component={RutinasStack}  options={{ title: 'Rutinas' }} />
+          <Tab.Screen name="Progreso" component={ProgresoStack} options={{ title: 'Progreso' }} />
         </Tab.Navigator>
       </NavigationContainer>
     </PaperProvider>
