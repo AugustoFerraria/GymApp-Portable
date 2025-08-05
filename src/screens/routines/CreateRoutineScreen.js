@@ -6,28 +6,25 @@ import {
   TextInput,
   Button,
   StyleSheet,
-  ScrollView,
   Alert,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
-import {
-  getExercises,
-  saveRoutine
-} from '../../services/storageService';
+import { useFocusEffect } from '@react-navigation/native';
+import { getExercises, saveRoutine } from '../../services/storageService';
 
 export default function CreateRoutineScreen({ navigation }) {
-  const [nombre, setNombre]                     = useState('');
-  const [descripcion, setDescripcion]           = useState('');
-  const [allExercises, setAllExercises]         = useState([]);
-  const [dropdownOpen, setDropdownOpen]         = useState(false);
-  const [seleccion, setSeleccion]               = useState(null);
-  const [repsInput, setRepsInput]               = useState('');
+  const [nombre, setNombre] = useState('');
+  const [descripcion, setDescripcion] = useState('');
+  const [allExercises, setAllExercises] = useState([]); // [{ label, value }]
+  const [seleccion, setSeleccion] = useState(null);
+  const [repsInput, setRepsInput] = useState('');
   const [routineExercises, setRoutineExercises] = useState([]);
 
-  // 1) Botón "+" en el header para crear ejercicio
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // Botón '+' en el header
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -43,7 +40,7 @@ export default function CreateRoutineScreen({ navigation }) {
     });
   }, [navigation]);
 
-  // 2) Cargar ejercicios siempre que la pantalla gana foco
+  // Carga ejercicios al enfocar pantalla
   useFocusEffect(
     useCallback(() => {
       (async () => {
@@ -55,17 +52,15 @@ export default function CreateRoutineScreen({ navigation }) {
 
   const handleAddExercise = () => {
     if (!seleccion || !repsInput) {
-      Alert.alert('Atención', 'Selecciona ejercicio y especifica repeticiones.');
-      return;
+      return Alert.alert('Atención', 'Selecciona ejercicio y especifica repeticiones.');
     }
     if (routineExercises.some(e => e.id === seleccion)) {
-      Alert.alert('Atención', 'Ya agregaste ese ejercicio.');
-      return;
+      return Alert.alert('Atención', 'Ya agregaste ese ejercicio.');
     }
-    const label = allExercises.find(e => e.value === seleccion)?.label || '';
+    const { label, value } = allExercises.find(e => e.value === seleccion);
     setRoutineExercises([
       ...routineExercises,
-      { id: seleccion, name: label, reps: parseInt(repsInput, 10) },
+      { id: value, name: label, reps: parseInt(repsInput, 10) },
     ]);
     setSeleccion(null);
     setRepsInput('');
@@ -77,8 +72,7 @@ export default function CreateRoutineScreen({ navigation }) {
 
   const handleCrear = async () => {
     if (!nombre.trim() || routineExercises.length === 0) {
-      Alert.alert('Atención', 'Falta nombre o ejercicios en la rutina.');
-      return;
+      return Alert.alert('Atención', 'Falta nombre o ejercicios en la rutina.');
     }
     const nueva = {
       id: Date.now().toString(),
@@ -90,8 +84,15 @@ export default function CreateRoutineScreen({ navigation }) {
     navigation.goBack();
   };
 
+  const displayLabel = seleccion
+    ? allExercises.find(e => e.value === seleccion)?.label
+    : 'Selecciona ejercicio';
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      nestedScrollEnabled
+    >
       <Text style={styles.label}>Nombre de la rutina:</Text>
       <TextInput
         style={styles.input}
@@ -111,14 +112,49 @@ export default function CreateRoutineScreen({ navigation }) {
       />
 
       <Text style={styles.label}>Agregar ejercicio:</Text>
-      <DropDownPicker
-        open={dropdownOpen}
-        value={seleccion}
-        items={allExercises}
-        setOpen={setDropdownOpen}
-        setValue={setSeleccion}
-        containerStyle={styles.picker}
-      />
+      <View style={styles.dropdownWrapper}>
+        <TouchableOpacity
+          style={styles.dropdownBtn}
+          onPress={() => setDropdownOpen(open => !open)}
+        >
+          <Text
+            style={[
+              styles.dropdownBtnText,
+              !seleccion && { color: '#666' },
+            ]}
+          >
+            {displayLabel}
+          </Text>
+          <Icon
+            name={dropdownOpen ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+            type="material"
+            color="#666"
+            size={24}
+          />
+        </TouchableOpacity>
+
+        {dropdownOpen && (
+          <ScrollView
+            style={styles.dropdownContainer}
+            nestedScrollEnabled
+          >
+            {allExercises.map(opt => (
+              <TouchableOpacity
+                key={opt.value}
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setSeleccion(opt.value);
+                  setDropdownOpen(false);
+                }}
+              >
+                <Text style={styles.dropdownItemText}>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+      </View>
 
       <TextInput
         style={styles.input}
@@ -154,7 +190,11 @@ export default function CreateRoutineScreen({ navigation }) {
       )}
 
       <View style={styles.createBtn}>
-        <Button title="Crear rutina" onPress={handleCrear} color="#FFD700" />
+        <Button
+          title="Crear rutina"
+          onPress={handleCrear}
+          color="#FFD700"
+        />
       </View>
     </ScrollView>
   );
@@ -162,27 +202,69 @@ export default function CreateRoutineScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { padding: 20 },
-  label:     { fontSize: 16, marginVertical: 8 },
+
+  label: { fontSize: 16, marginVertical: 8 },
+
   input: {
-    borderColor:      '#FFD700',
-    borderWidth:      1,
-    borderRadius:     5,
-    padding:          8,
-    marginBottom:     16,
-    backgroundColor:  '#fff',
-  },
-  picker:       { marginBottom: 16, zIndex: 1000 },
-  card: {
-    flexDirection:   'row',
-    alignItems:      'center',
-    justifyContent:  'space-between',
+    borderWidth: 1,
+    borderColor: '#FFD700',
+    borderRadius: 10,
     backgroundColor: '#fff',
-    borderRadius:    5,
-    padding:         12,
-    marginVertical:  6,
-    elevation:       1,
+    padding: 8,
+    marginBottom: 16,
+  },
+
+  dropdownWrapper: {
+    marginBottom: 16,
+  },
+  dropdownBtn: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFD700',
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+  },
+  dropdownBtnText: {
+    fontSize: 16,
+    color: '#000',
+  },
+
+  dropdownContainer: {
+    borderWidth: 1,
+    borderColor: '#000',
+    borderRadius: 15,
+    backgroundColor: '#fff',
+    maxHeight: 250,
+    marginTop: 4,
+  },
+  dropdownItem: {
+    paddingVertical: 20,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#000',
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: '#000',
+  },
+
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#FFD700',
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    padding: 12,
+    marginVertical: 6,
   },
   cardText: { fontSize: 16 },
-  remove:   { color: '#FF4D4D', fontSize: 18 },
-  createBtn:{ marginTop: 30 },
+  remove: { color: '#FF4D4D', fontSize: 18 },
+
+  createBtn: { marginTop: 30 },
 });
