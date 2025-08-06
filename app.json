@@ -33,6 +33,12 @@
       "eas": {
         "projectId": "43051a9c-5bd7-46b9-b1fa-87ad783b3615"
       }
-    }
+    },
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
+    "releaseChannel": "preview"
   }
 }
