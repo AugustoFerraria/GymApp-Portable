@@ -1,10 +1,5 @@
 // src/screens/routines/EditRoutineScreen.js
-import React, {
-  useState,
-  useEffect,
-  useLayoutEffect,
-  useContext,
-} from 'react';
+import React, { useState, useEffect, useLayoutEffect, useContext } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -17,30 +12,32 @@ import {
   Alert,
 } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { useFocusEffect } from '@react-navigation/native';
 import { getExercises, getRoutines, updateRoutine } from '../../services/storageService';
 import { ThemeContext } from '../../context/ThemeContext';
 
 export default function EditRoutineScreen({ route, navigation }) {
   const { routineId } = route.params;
-  const { isDark } = useContext(ThemeContext);
+  const { isDark }    = useContext(ThemeContext);
 
-  const [nombre, setNombre] = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [allExercises, setAllExercises] = useState([]);
-  const [seleccion, setSeleccion] = useState(null);
-  const [repsInput, setRepsInput] = useState('');
+  const [nombre, setNombre]                   = useState('');
+  const [descripcion, setDescripcion]         = useState('');
+  const [allExercises, setAllExercises]       = useState([]);
+  const [seleccion, setSeleccion]             = useState(null);
+  const [seriesInput, setSeriesInput]         = useState('');
+  const [repsInput, setRepsInput]             = useState('');
   const [routineExercises, setRoutineExercises] = useState([]);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen]       = useState(false);
 
-  const bgScreen    = isDark ? '#414141' : '#fff';
-  const cardBg      = isDark ? '#616161' : '#fff';
-  const labelColor  = isDark ? '#fff' : '#000';
-  const borderColor = '#FFD700';
-  const inputBg       = isDark ? '#616161' : '#fff';
-  const inputColor= isDark ? '#fff'   : '#000';
-  const placeholder = isDark ? '#ccc' : '#666';
+  // Colores
+  const bgScreen     = isDark ? '#414141' : '#fff';
+  const cardBg       = isDark ? '#616161' : '#fff';
+  const labelColor   = isDark ? '#fff' : '#000';
+  const borderColor  = '#FFD700';
+  const inputBg      = isDark ? '#616161' : '#fff';
+  const inputColor   = isDark ? '#fff' : '#000';
+  const placeholder  = isDark ? '#ccc' : '#666';
 
+  // Header
   useLayoutEffect(() => {
     navigation.setOptions({
       headerStyle:     { backgroundColor: '#FFD700' },
@@ -58,6 +55,7 @@ export default function EditRoutineScreen({ route, navigation }) {
     });
   }, [navigation]);
 
+  // Cargo datos
   useEffect(() => {
     (async () => {
       const exArr = await getExercises();
@@ -67,27 +65,30 @@ export default function EditRoutineScreen({ route, navigation }) {
       if (!rt) {
         Alert.alert('Error', 'Rutina no encontrada');
         navigation.goBack();
-      } else {
-        setNombre(rt.name);
-        setDescripcion(rt.description || '');
-        setRoutineExercises(rt.exercises);
+        return;
       }
+      setNombre(rt.name);
+      setDescripcion(rt.description || '');
+      setRoutineExercises(rt.exercises);
     })();
   }, [navigation, routineId]);
 
   const handleAddExercise = () => {
-    if (!seleccion || !repsInput) {
-      return Alert.alert('Atención', 'Selecciona ejercicio y repeticiones.');
+    const s = parseInt(seriesInput, 10);
+    const r = parseInt(repsInput, 10);
+    if (!seleccion || isNaN(s) || s <= 0 || isNaN(r) || r <= 0) {
+      return Alert.alert('Atención', 'Selecciona ejercicio, series y repeticiones válidas.');
     }
     if (routineExercises.some(e => e.id === seleccion)) {
-      return Alert.alert('Atención', 'Ejercicio ya agregado');
+      return Alert.alert('Atención', 'Ese ejercicio ya está en la rutina.');
     }
-    const { label, value } = allExercises.find(e => e.value === seleccion);
+    const { label } = allExercises.find(e => e.value === seleccion);
     setRoutineExercises([
       ...routineExercises,
-      { id: value, name: label, reps: parseInt(repsInput, 10) },
+      { id: seleccion, name: label, series: s, reps: r },
     ]);
     setSeleccion(null);
+    setSeriesInput('');
     setRepsInput('');
   };
 
@@ -96,10 +97,7 @@ export default function EditRoutineScreen({ route, navigation }) {
 
   const handleSave = async () => {
     if (!nombre.trim() || routineExercises.length === 0) {
-      return Alert.alert(
-        'Atención',
-        'Nombre y al menos un ejercicio son obligatorios'
-      );
+      return Alert.alert('Atención', 'Nombre y al menos un ejercicio son obligatorios.');
     }
     const updated = {
       id:          routineId,
@@ -117,15 +115,10 @@ export default function EditRoutineScreen({ route, navigation }) {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bgScreen }]}>
-      <ScrollView
-        contentContainerStyle={[styles.container, { backgroundColor: bgScreen }]}
-      >
+      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: bgScreen }]}>
         <Text style={[styles.label, { color: labelColor }]}>Nombre:</Text>
         <TextInput
-          style={[
-            styles.input,
-            { backgroundColor: inputBg, borderColor, color: inputColor },
-          ]}
+          style={[styles.input, { backgroundColor: inputBg, borderColor, color: inputColor }]}
           placeholder="Nombre"
           placeholderTextColor={placeholder}
           value={nombre}
@@ -134,33 +127,20 @@ export default function EditRoutineScreen({ route, navigation }) {
 
         <Text style={[styles.label, { color: labelColor }]}>Descripción:</Text>
         <TextInput
-          style={[
-            styles.input,
-            { backgroundColor: inputBg, borderColor, color: inputColor },
-          ]}
+          style={[styles.input, { backgroundColor: inputBg, borderColor, color: inputColor }]}
           placeholder="Descripción (opcional)"
           placeholderTextColor={placeholder}
           value={descripcion}
           onChangeText={setDescripcion}
         />
 
-        <Text style={[styles.label, { color: labelColor }]}>
-          Agregar ejercicio:
-        </Text>
+        <Text style={[styles.label, { color: labelColor }]}>Agregar ejercicio:</Text>
         <View style={styles.dropdownWrapper}>
           <TouchableOpacity
-            style={[
-              styles.dropdownBtn,
-              { backgroundColor: inputBg, borderColor },
-            ]}
+            style={[styles.dropdownBtn, { backgroundColor: inputBg, borderColor }]}
             onPress={() => setDropdownOpen(o => !o)}
           >
-            <Text
-              style={[
-                styles.dropdownBtnText,
-                { color: seleccion ? inputColor : placeholder },
-              ]}
-            >
+            <Text style={{ color: seleccion ? inputColor : placeholder }}>
               {displayLabel}
             </Text>
             <Icon
@@ -170,32 +150,18 @@ export default function EditRoutineScreen({ route, navigation }) {
               size={24}
             />
           </TouchableOpacity>
-
           {dropdownOpen && (
-            <ScrollView
-              style={[
-                styles.dropdownContainer,
-                { backgroundColor: bgScreen, borderColor },
-              ]}
-            >
+            <ScrollView style={[styles.dropdownContainer, { backgroundColor: bgScreen, borderColor }]}>
               {allExercises.map(opt => (
                 <TouchableOpacity
                   key={opt.value}
-                  style={[
-                    styles.dropdownItem,
-                    { backgroundColor: cardBg },
-                  ]}
+                  style={[styles.dropdownItem, { backgroundColor: cardBg }]}
                   onPress={() => {
                     setSeleccion(opt.value);
                     setDropdownOpen(false);
                   }}
                 >
-                  <Text
-                    style={[
-                      styles.dropdownItemText,
-                      { color: labelColor },
-                    ]}
-                  >
+                  <Text style={[styles.dropdownItemText, { color: labelColor }]}>
                     {opt.label}
                   </Text>
                 </TouchableOpacity>
@@ -204,43 +170,39 @@ export default function EditRoutineScreen({ route, navigation }) {
           )}
         </View>
 
-        <TextInput
-          style={[
-            styles.input,
-            { backgroundColor: inputBg, borderColor, color: inputColor },
-          ]}
-          placeholder="Repeticiones"
-          placeholderTextColor={placeholder}
-          keyboardType="numeric"
-          value={repsInput}
-          onChangeText={setRepsInput}
-        />
+        <View style={styles.row}>
+          <TextInput
+            style={[styles.smallInput, { backgroundColor: inputBg, borderColor, color: inputColor }]}
+            placeholder="Series"
+            placeholderTextColor={placeholder}
+            keyboardType="numeric"
+            value={seriesInput}
+            onChangeText={setSeriesInput}
+          />
+          <TextInput
+            style={[styles.smallInput, { backgroundColor: inputBg, borderColor, color: inputColor }]}
+            placeholder="Reps"
+            placeholderTextColor={placeholder}
+            keyboardType="numeric"
+            value={repsInput}
+            onChangeText={setRepsInput}
+          />
+        </View>
 
         <View style={styles.btnWrapper}>
-          <Button
-            title="＋ Agregar ejercicio"
-            onPress={handleAddExercise}
-            color="#FFD700"
-          />
+          <Button title="＋ Agregar ejercicio" onPress={handleAddExercise} color={borderColor} />
         </View>
 
         {routineExercises.length > 0 && (
           <>
-            <Text
-              style={[styles.label, { color: labelColor, marginTop: 20 }]}
-            >
-              Ejercicios:
-            </Text>
+            <Text style={[styles.label, { color: labelColor, marginTop: 20 }]}>Ejercicios:</Text>
             {routineExercises.map(e => (
               <View
                 key={e.id}
-                style={[
-                  styles.card,
-                  { backgroundColor: cardBg, borderColor },
-                ]}
+                style={[styles.card, { backgroundColor: cardBg, borderColor }]}
               >
                 <Text style={[styles.cardText, { color: labelColor }]}>
-                  {e.name} — {e.reps} reps
+                  {e.name} — {e.series} series – {e.reps} reps
                 </Text>
                 <TouchableOpacity onPress={() => handleRemove(e.id)}>
                   <Text style={styles.remove}>✕</Text>
@@ -251,11 +213,7 @@ export default function EditRoutineScreen({ route, navigation }) {
         )}
 
         <View style={styles.saveBtn}>
-          <Button
-            title="Guardar cambios"
-            onPress={handleSave}
-            color="#FFD700"
-          />
+          <Button title="Guardar cambios" onPress={handleSave} color={borderColor} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -263,50 +221,39 @@ export default function EditRoutineScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  container: { padding: 20 },
-  label: { fontSize: 16, marginBottom: 8 },
-  input: {
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 8,
-    marginBottom: 16,
+  safe:            { flex: 1 },
+  container:       { padding: 20 },
+  label:           { fontSize: 16, marginBottom: 8 },
+  input:           { borderWidth: 1, borderRadius: 10, padding: 8, marginBottom: 16 },
+  dropdownWrapper: { marginBottom: 16, position: 'relative' },
+  dropdownBtn:     {
+    flexDirection:    'row',
+    justifyContent:   'space-between',
+    alignItems:       'center',
+    borderWidth:      1,
+    borderRadius:     10,
+    paddingVertical:  12,
+    paddingHorizontal:12,
   },
-  dropdownWrapper: { marginBottom: 16 },
-  dropdownBtn: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-  },
-  dropdownBtnText: { fontSize: 16 },
-  dropdownContainer: {
-    marginTop: 4,
-    borderWidth: 1,
-    borderRadius: 15,
-    maxHeight: 250,
-  },
-  dropdownItem: {
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#888',
-  },
+  dropdownContainer:{ marginTop: 4, borderWidth: 1, borderRadius: 15, maxHeight: 250, position: 'absolute', top: 48, left: 0, right: 0, borderWidth: 1, borderRadius: 15, maxHeight: 250, zIndex: 999 },
+  dropdownItem:     { paddingVertical: 16, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: '#888' },
   dropdownItemText: { fontSize: 16 },
-  btnWrapper: { marginTop: 8, marginBottom: 16 },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 12,
-    marginVertical: 6,
+  row:             { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
+  smallInput:      {
+    flex: 1, borderWidth: 1, borderRadius: 10, padding: 8, marginRight: 8,
   },
-  cardText: { fontSize: 16 },
-  remove: { color: '#FF4D4D', fontSize: 18 },
-  saveBtn: { marginTop: 30 },
+  btnWrapper:      { marginTop: 8, marginBottom: 16 },
+  card:            {
+    flexDirection:   'row',
+    alignItems:      'center',
+    justifyContent:  'space-between',
+    borderWidth:     1,
+    borderRadius:    10,
+    padding:         12,
+    marginVertical:  6,
+  },
+  cardText:        { fontSize: 16 },
+  remove:          { color: '#FF4D4D', fontSize: 18 },
+  createBtn:       { marginTop: 30 },
+  saveBtn:         { marginTop: 30 },
 });

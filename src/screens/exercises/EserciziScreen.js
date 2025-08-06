@@ -1,7 +1,6 @@
 // src/screens/exercises/EserciziScreen.js
 import React, { useState, useEffect, useContext } from 'react';
 import { FlatList, TouchableOpacity, Text, StyleSheet, View } from 'react-native';
-
 import Background from '../../components/Background';
 import { ThemeContext } from '../../context/ThemeContext';
 
@@ -16,8 +15,8 @@ export default function EserciziScreen({ navigation, route }) {
 
   // colores dinámicos
   const cardBg    = isDark ? '#616161' : '#fff';
-  const textColor = isDark ? '#fff'   : '#000';
-  const descColor = isDark ? '#ccc'   : '#666';
+  const nameColor = isDark ? '#fff'   : '#000';
+  const subColor  = isDark ? '#ccc'   : '#666';
 
   return (
     <Background>
@@ -32,18 +31,16 @@ export default function EserciziScreen({ navigation, route }) {
               navigation.navigate('DetalleEjercicio', { exercise: item })
             }
           >
-            <Text style={[styles.name, { color: textColor }]}>
+            <Text style={[styles.name, { color: nameColor }]}>
               {item.name}
             </Text>
-            {item.reps != null && (
-              <Text style={[styles.reps, { color: descColor }]}>
-                Repeticiones: {item.reps}
-              </Text>
-            )}
+            <Text style={[styles.sub,  { color: subColor }]}>
+              {item.series} series – {item.reps} repeticiones
+            </Text>
           </TouchableOpacity>
         )}
         ListEmptyComponent={
-          <Text style={[styles.emptyText, { color: descColor }]}>
+          <Text style={[styles.emptyText, { color: subColor }]}>
             Esta rutina no tiene ejercicios aún
           </Text>
         }
@@ -55,12 +52,12 @@ export default function EserciziScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   list:      { padding: 16 },
   card:      {
-    borderRadius:    8,
-    padding:         16,
-    marginBottom:    12,
-    elevation:       2,
+    borderRadius:  8,
+    padding:       16,
+    marginBottom:  12,
+    elevation:     2,
   },
   name:      { fontSize: 18, fontWeight: '600' },
-  reps:      { marginTop: 4 },
+  sub:       { marginTop: 4 },
   emptyText: { textAlign: 'center', marginTop: 32 },
 });
