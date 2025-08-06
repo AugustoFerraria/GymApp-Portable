@@ -1,3 +1,4 @@
+// src/screens/progress/ProgressScreen.js
 import React, { useState } from 'react';
 import {
   View,
@@ -10,7 +11,6 @@ import {
   Dimensions,
   TouchableOpacity,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 
@@ -31,6 +31,7 @@ export default function ProgressScreen() {
   const [selectedExercise, setSelectedExercise] = useState('');
   const [data, setData] = useState([]);
   const [error, setError] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -81,6 +82,10 @@ export default function ProgressScreen() {
     setError('');
   };
 
+  const displayLabel = selectedExercise
+    ? exercises.find(e => e.id === selectedExercise)?.name
+    : 'Selecciona ejercicio';
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -94,17 +99,49 @@ export default function ProgressScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Picker
-          selectedValue={selectedExercise}
-          style={[styles.picker, { color: '#000' }]}
-          onValueChange={setSelectedExercise}
-          dropdownIconColor="#000"
-        >
-          <Picker.Item label="Selecciona ejercicio" value="" />
-          {exercises.map((ex) => (
-            <Picker.Item key={ex.id} label={ex.name} value={ex.id} />
-          ))}
-        </Picker>
+        <Text style={styles.label}>Ejercicio:</Text>
+        <View style={styles.dropdownWrapper}>
+          <TouchableOpacity
+            style={styles.dropdownBtn}
+            onPress={() => setDropdownOpen(o => !o)}
+          >
+            <Text
+              style={[
+                styles.dropdownBtnText,
+                !selectedExercise && { color: '#666' },
+              ]}
+            >
+              {displayLabel}
+            </Text>
+            <Icon
+              name={dropdownOpen ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+              type="material"
+              color="#666"
+              size={24}
+            />
+          </TouchableOpacity>
+          {dropdownOpen && (
+            <ScrollView
+              style={styles.dropdownContainer}
+              nestedScrollEnabled
+            >
+              {exercises.map(opt => (
+                <TouchableOpacity
+                  key={opt.id}
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setSelectedExercise(opt.id);
+                    setDropdownOpen(false);
+                  }}
+                >
+                  <Text style={styles.dropdownItemText}>
+                    {opt.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+        </View>
 
         <TextInput
           style={styles.input}
@@ -138,7 +175,7 @@ export default function ProgressScreen() {
             <Text style={[styles.tableCell, styles.tableHeader]}>Peso</Text>
             <Text style={[styles.tableCell, styles.tableHeader]}>Reps</Text>
           </View>
-          {dataDesc.map((entry) => (
+          {dataDesc.map(entry => (
             <View key={entry.date} style={styles.tableRow}>
               <Text style={styles.tableCell}>
                 {new Date(entry.date).toLocaleDateString()}
@@ -155,6 +192,7 @@ export default function ProgressScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
+
   header: {
     height: 85,
     backgroundColor: '#FFD700',
@@ -170,8 +208,43 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   headerButton: { padding: 8 },
+
   content: { padding: 16, paddingBottom: 32 },
-  picker: { height: 50, backgroundColor: '#fff', marginBottom: 16, color: '#000' },
+
+  label: { fontSize: 16, marginBottom: 8 },
+
+  dropdownWrapper: { marginBottom: 16 },
+  dropdownBtn: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFD700',
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+  },
+  dropdownBtnText: { fontSize: 16, color: '#000' },
+  dropdownContainer: {
+    borderWidth: 1,
+    borderColor: '#000',
+    borderRadius: 15,
+    backgroundColor: '#fff',
+    maxHeight: 350,
+    marginTop: 4,
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: '#000',
+  },
+
   input: {
     borderBottomWidth: 1,
     borderBottomColor: '#000',
@@ -180,8 +253,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     backgroundColor: '#fff',
   },
+
   errorText: { color: 'red', textAlign: 'center', marginBottom: 16 },
   noDataText: { textAlign: 'center', color: '#666', marginVertical: 16 },
+
   table: { marginTop: 24, borderTopWidth: 1, borderColor: '#CCC' },
   tableRowHeader: {
     flexDirection: 'row',
