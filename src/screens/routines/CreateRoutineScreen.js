@@ -105,7 +105,10 @@ export default function CreateRoutineScreen({ navigation }) {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bgScreen }]}>
-      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: bgScreen }]}>
+      <ScrollView 
+            nestedScrollEnabled={true}
+            scrollEnabled={!dropdownOpen}
+            contentContainerStyle={[styles.container, { backgroundColor: bgScreen }]}>
         <Text style={[styles.label, { color: labelColor }]}>Nombre de la rutina:</Text>
         <TextInput
           style={[styles.input, { backgroundColor: inputBg, borderColor, color: inputColor }]}
@@ -141,7 +144,9 @@ export default function CreateRoutineScreen({ navigation }) {
             />
           </TouchableOpacity>
           {dropdownOpen && (
-            <ScrollView style={[styles.dropdownContainer, { backgroundColor: bgScreen, borderColor }]}>
+            <ScrollView
+             nestedScrollEnabled={true}
+             style={[styles.dropdownContainer, { backgroundColor: bgScreen, borderColor }]}>
               {allExercises.map(opt => (
                 <TouchableOpacity
                   key={opt.value}
