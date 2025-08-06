@@ -6,7 +6,6 @@
   { "id": "5",  "name": "Press militar",          "description": "Empuja barra vertical de pie -> deltoides" },
   { "id": "6", "name": "Sentadillas",            "description": "Flexiona rodillas y caderas -> cuádriceps, glúteos" },
   { "id": "7", "name": "Peso muerto",            "description": "Levanta barra desde el suelo -> cadena posterior" },
-  { "id": "8", "name": "Dominadas",              "description": "Eleva cuerpo con agarre prono -> espalda, bíceps" },
   { "id": "9", "name": "Press francés",          "description": "Extiende codos con barra Z tumbado -> tríceps" },
   { "id": "10", "name": "Tríceps en polea",       "description": "Empuja cuerda de polea alta -> tríceps" },
   { "id": "11", "name": "Máquina de cuádriceps",  "description": "Extiende piernas en máquina -> cuádriceps" },
@@ -14,7 +13,5 @@
   { "id": "13", "name": "Vuelos laterales",       "description": "Eleva brazos lateralmente -> deltoides laterales" },
   { "id": "14", "name": "Hip thrust",             "description": "Levanta caderas en banco -> glúteos" },
   { "id": "15", "name": "Remo con barra",         "description": "Tira barra al abdomen inclinado -> dorsal, romboides" },
-  { "id": "16", "name": "Jalón al pecho",         "description": "Tira agarre al pecho en polea -> dorsal ancho" },
-  { "id": "17", "name": "Elevación de gemelos",   "description": "Eleva talones de pie -> pantorrillas" },
-  { "id": "18", "name": "Plancha",                "description": "Mantén cuerpo recto apoyado en antebrazos -> core" }
+  { "id": "16", "name": "Jalón al pecho",         "description": "Tira agarre al pecho en polea -> dorsal ancho" }
 ]
