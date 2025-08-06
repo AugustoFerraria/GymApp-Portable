@@ -132,3 +132,8 @@ export async function updateExercise(updated) {
   await AsyncStorage.setItem(EXERCISES_KEY, JSON.stringify(newArr));
   return newArr;
 }
+
+export async function saveExercisesOrder(exercisesArray) {
+  await AsyncStorage.setItem(EXERCISES_KEY, JSON.stringify(exercisesArray));
+  return exercisesArray;
+}
