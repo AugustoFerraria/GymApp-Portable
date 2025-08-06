@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+// src/screens/home/HomeScreen.js
+import React, { useState, useCallback, useRef, useEffect, useContext } from 'react';
 import {
   FlatList,
   TouchableOpacity,
@@ -6,17 +7,17 @@ import {
   StyleSheet,
   View,
   Animated,
-  Platform,
-  UIManager,
 } from 'react-native';
 import { FAB } from 'react-native-paper';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { getRoutines, deleteRoutine } from '../../services/storageService';
 import Background from '../../components/Background';
 import { Icon } from 'react-native-elements';
+import { ThemeContext } from '../../context/ThemeContext';
 
 function RoutineCard({ item, expanded, onToggle, navigation, onDelete }) {
   const animation = useRef(new Animated.Value(expanded ? 1 : 0)).current;
+  const { isDark } = useContext(ThemeContext);
 
   useEffect(() => {
     Animated.timing(animation, {
@@ -30,36 +31,52 @@ function RoutineCard({ item, expanded, onToggle, navigation, onDelete }) {
     inputRange: [0, 1],
     outputRange: ['0deg', '180deg'],
   });
-
   const height = animation.interpolate({
     inputRange: [0, 0.78],
     outputRange: [0, 140],
   });
-
   const opacity = animation;
+
+  // Fondos claros/oscuro
+  const cardBg = isDark ? '#414141' : '#fff';
+  const menuBg = isDark ? '#414141' : '#f9f9f9';
+  const textColor = isDark ? '#fff' : '#000';
+  const descColor = isDark ? '#ccc' : '#666';
+  const arrowColor = isDark ? '#ccc' : '#666';
 
   return (
     <View style={styles.cardContainer}>
       <TouchableOpacity
-        style={[styles.card, expanded && styles.cardExpanded]}
+        style={[
+          styles.card,
+          expanded && styles.cardExpanded,
+          { backgroundColor: cardBg },
+        ]}
         onPress={() => onToggle(item.id)}
       >
         <View style={styles.cardHeader}>
-          <Text style={styles.name}>{item.name}</Text>
+          <Text style={[styles.name, { color: textColor }]}>{item.name}</Text>
           <Animated.View style={{ transform: [{ rotate }] }}>
             <Icon
               name="keyboard-arrow-down"
               type="material"
-              color="#666"
+              color={arrowColor}
               size={24}
             />
           </Animated.View>
         </View>
-        {item.description && <Text style={styles.desc}>{item.description}</Text>}
+        {item.description && (
+          <Text style={[styles.desc, { color: descColor }]}>
+            {item.description}
+          </Text>
+        )}
       </TouchableOpacity>
 
       <Animated.View
-        style={[styles.menu, { height, opacity, overflow: 'hidden' }]}
+        style={[
+          styles.menu,
+          { backgroundColor: menuBg, height, opacity, overflow: 'hidden' },
+        ]}
       >
         <TouchableOpacity
           style={[styles.menuButton, styles.viewButton]}
@@ -118,9 +135,30 @@ function RoutineCard({ item, expanded, onToggle, navigation, onDelete }) {
 
 export default function HomeScreen() {
   const navigation = useNavigation();
+  const { isDark, toggleTheme } = useContext(ThemeContext);
+
   const [routines, setRoutines] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
   const [fabOpen, setFabOpen] = useState(false);
+
+  // Botón tema en header
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={toggleTheme}
+          style={{ marginRight: 16 }}
+        >
+          <Icon
+            name={isDark ? 'wb-sunny' : 'dark-mode'}
+            type="material"
+            color="#fff"
+            size={24}
+          />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, isDark, toggleTheme]);
 
   // Recarga al enfocar
   useFocusEffect(
@@ -163,6 +201,7 @@ export default function HomeScreen() {
           <Text style={styles.emptyText}>No tienes rutinas aún</Text>
         }
       />
+
       <FAB.Group
         open={fabOpen}
         icon={fabOpen ? 'close' : 'plus'}
@@ -188,12 +227,12 @@ const styles = StyleSheet.create({
   list:         { padding: 16 },
   emptyList:    { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16 },
   cardContainer:{ marginBottom: 12 },
-  card:         { backgroundColor: '#fff', borderRadius: 8, padding: 16, elevation: 2 },
+  card:         { borderRadius: 8, padding: 16, elevation: 2 },
   cardExpanded: { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
   cardHeader:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   name:         { fontSize: 18, fontWeight: '600' },
-  desc:         { marginTop: 4, color: '#666' },
-  menu:         { backgroundColor: '#f9f9f9', borderRadius: 8 },
+  desc:         { marginTop: 4 },
+  menu:         { borderRadius: 8 },
   menuButton:   { paddingVertical: 18, borderRadius: 6, alignSelf: 'stretch', paddingHorizontal: 16 },
   viewButton:   {},
   editButton:   { backgroundColor: 'rgba(0,122,255,0.1)' },

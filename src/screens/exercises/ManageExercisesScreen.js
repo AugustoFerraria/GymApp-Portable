@@ -1,15 +1,14 @@
 // src/screens/exercises/ManageExercisesScreen.js
-import React, { useState, useCallback, useLayoutEffect } from 'react';
+import React, { useState, useCallback, useLayoutEffect, useContext } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
+  Alert,
 } from 'react-native';
-import DraggableFlatList, {
-  ScaleDecorator,
-} from 'react-native-draggable-flatlist';
+import DraggableFlatList, { ScaleDecorator } from 'react-native-draggable-flatlist';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 import {
@@ -17,9 +16,11 @@ import {
   deleteExercise,
   saveExercisesOrder,
 } from '../../services/storageService';
+import { ThemeContext } from '../../context/ThemeContext';
 
 export default function ManageExercisesScreen() {
   const navigation = useNavigation();
+  const { isDark } = useContext(ThemeContext);
   const [exercises, setExercises] = useState([]);
 
   // Carga ejercicios al enfocar la pantalla
@@ -45,10 +46,11 @@ export default function ManageExercisesScreen() {
           onPress={() => navigation.navigate('CrearEjercicio')}
         />
       ),
+      headerStyle: { backgroundColor: isDark ? '#414141' : '#FFD700' },
     });
-  }, [navigation]);
+  }, [navigation, isDark]);
 
-  // Cuando termina de arrastrar, guardamos el nuevo orden
+  // Guardar orden al soltar
   const handleDragEnd = useCallback(
     async ({ data }) => {
       setExercises(data);
@@ -59,63 +61,73 @@ export default function ManageExercisesScreen() {
 
   // Render de cada fila
   const renderItem = useCallback(
-    ({ item, drag, isActive }) => (
-      <ScaleDecorator>
-        <View style={[styles.card, isActive && styles.cardActive]}>
-          {/* Handle: arranca con onPressIn */}
-          <TouchableOpacity
-            onPressIn={drag}
-            style={styles.dragHandle}
+    ({ item, drag, isActive }) => {
+      const cardBg = isDark ? '#414141' : '#fff';
+      const cardActiveBg = isDark ? '#575757' : '#f0f0f0';
+      const textColor = isDark ? '#fff' : '#000';
+      const descColor = isDark ? '#ccc' : '#666';
+
+      return (
+        <ScaleDecorator>
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: isActive ? cardActiveBg : cardBg },
+            ]}
           >
-            <Icon name="drag-handle" type="material" color="#999" size={24} />
-          </TouchableOpacity>
-
-          <View style={styles.cardContent}>
-            <Text style={styles.name}>{item.name}</Text>
-            {item.description ? (
-              <Text style={styles.desc}>{item.description}</Text>
-            ) : null}
-          </View>
-
-          <View style={styles.actions}>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate('EditExercise', { exercise: item })
-              }
-              style={styles.iconSpacing}
-            >
-              <Icon name="edit" type="material" size={28} color="#007AFF" />
+            <TouchableOpacity onPressIn={drag} style={styles.dragHandle}>
+              <Icon name="drag-handle" type="material" color="#999" size={24} />
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() =>
-                Alert.alert(
-                  'Eliminar ejercicio',
-                  '¿Estás seguro?',
-                  [
-                    { text: 'Cancelar', style: 'cancel' },
-                    {
-                      text: 'Borrar',
-                      style: 'destructive',
-                      onPress: async () => {
-                        const updated = await deleteExercise(item.id);
-                        setExercises(updated);
+
+            <View style={styles.cardContent}>
+              <Text style={[styles.name, { color: textColor }]}>{item.name}</Text>
+              {item.description ? (
+                <Text style={[styles.desc, { color: descColor }]}>
+                  {item.description}
+                </Text>
+              ) : null}
+            </View>
+
+            <View style={styles.actions}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('EditExercise', { exercise: item })
+                }
+                style={styles.iconSpacing}
+              >
+                <Icon name="edit" type="material" size={28} color="#007AFF" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  Alert.alert(
+                    'Eliminar ejercicio',
+                    '¿Estás seguro?',
+                    [
+                      { text: 'Cancelar', style: 'cancel' },
+                      {
+                        text: 'Borrar',
+                        style: 'destructive',
+                        onPress: async () => {
+                          const updated = await deleteExercise(item.id);
+                          setExercises(updated);
+                        },
                       },
-                    },
-                  ]
-                )
-              }
-            >
-              <Icon name="delete" type="material" size={28} color="#FF4D4D" />
-            </TouchableOpacity>
+                    ]
+                  )
+                }
+              >
+                <Icon name="delete" type="material" size={28} color="#FF4D4D" />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScaleDecorator>
-    ),
-    [navigation]
+        </ScaleDecorator>
+      );
+    },
+    [navigation, isDark]
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#414141' : '#fff' }]}>
       <DraggableFlatList
         data={exercises}
         onDragEnd={handleDragEnd}
@@ -127,19 +139,15 @@ export default function ManageExercisesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     padding: 12,
     marginHorizontal: 16,
     marginVertical: 6,
     borderRadius: 8,
     elevation: 2,
-  },
-  cardActive: {
-    backgroundColor: '#f0f0f0',
   },
   dragHandle: {
     padding: 8,
@@ -154,7 +162,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   desc: {
-    color: '#666',
     marginTop: 4,
   },
   actions: {
