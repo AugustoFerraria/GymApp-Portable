@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert,
   ScrollView,
+  Switch,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { Icon } from "react-native-elements";
@@ -30,6 +31,7 @@ export default function ManageProgressScreen() {
   const [editingKey, setEditingKey] = useState(null);
   const [editWeight, setEditWeight] = useState("");
   const [editReps, setEditReps] = useState("");
+  const [editFailure, setEditFailure] = useState(false);
 
   // Colores dinámicos
   const bgScreen = isDark ? "#0B0F14" : "#FFFFFF";
@@ -74,6 +76,7 @@ export default function ManageProgressScreen() {
     setEditingKey(key);
     setEditWeight(String(item.weight));
     setEditReps(String(item.reps));
+    setEditFailure(Boolean(item.failure));
   };
 
   const handleEditSave = async (item) => {
@@ -85,11 +88,10 @@ export default function ManageProgressScreen() {
     if (!editReps.trim() || isNaN(r)) {
       return Alert.alert("Atención", "Debes ingresar repeticiones válidas.");
     }
-    setAllProgresses(await updateProgress(item, { weight: w, reps: r }));
+    setAllProgresses(await updateProgress(item, { weight: w, reps: r, failure: editFailure }));
     setEditingKey(null);
   };
 
-  // Etiqueta del dropdown
   const displayLabel = selectedExercise
     ? exercises.find((e) => e.id === selectedExercise)?.name
     : "Todos los ejercicios";
@@ -129,10 +131,19 @@ export default function ManageProgressScreen() {
               placeholder="Repeticiones"
               placeholderTextColor={placeholderColor}
             />
+            <View style={styles.switchRow}>
+              <Text style={[styles.switchLabel, { color: labelColor }]}>Llegó al fallo</Text>
+              <Switch
+                value={editFailure}
+                onValueChange={setEditFailure}
+                trackColor={{ false: isDark ? "#777" : "#ccc", true: "#ff0000a2" }}
+                thumbColor={editFailure ? "#fff" : (isDark ? "#eee" : "#fff")}
+              />
+            </View>
           </>
         ) : (
           <Text style={[styles.value, { color: labelColor }]}>
-            {item.weight} kg — {item.reps} reps
+            {item.weight} kg — {item.reps} reps — {item.failure ? "Fallo: Sí" : "Fallo: No"}
           </Text>
         )}
 
@@ -165,7 +176,6 @@ export default function ManageProgressScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bgScreen }]}>
-      {/* filtro con dropdown custom */}
       <View style={[styles.filters, { backgroundColor: filterBg }]}>
         <TouchableOpacity
           style={[
@@ -279,6 +289,14 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     fontSize: 16,
   },
+  switchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  switchLabel: { fontSize: 16 },
+
   actions: { flexDirection: "row", justifyContent: "flex-end", marginTop: 8 },
   btnText: { color: "#FFD700", marginLeft: 12, fontWeight: "600" },
   deleteText: { color: "#FF4D4D" },
