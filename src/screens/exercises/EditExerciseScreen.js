@@ -18,10 +18,11 @@ export default function EditExerciseScreen({ route, navigation }) {
   const [name, setName] = useState('');
   const [description, setDesc] = useState('');
 
-  const bgGray = '#414141';
-  const inputBg = '#fff';
-  const textColor = isDark ? '#000' : '#000';
-  const borderColor = isDark ? '#666' : '#ddd';
+  const bgScreen    = isDark ? '#0B0F14' : '#FFFFFF';
+  const inputBg     = isDark ? '#131922' : '#FFFFFF';
+  const textColor   = isDark ? '#FFFFFF' : '#111827';
+  const placeholder = isDark ? '#9AA4B2' : '#666666';
+  const borderColor = isDark ? '#1F2937' : '#DDDDDD';
 
   useEffect(() => {
     setName(exercise.name);
@@ -43,11 +44,11 @@ export default function EditExerciseScreen({ route, navigation }) {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bgGray }]}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bgScreen }]}>
       <View style={styles.container}>
         <TextInput
           placeholder="Nombre"
-          placeholderTextColor="#666"
+          placeholderTextColor={placeholder}
           value={name}
           onChangeText={setName}
           style={[
@@ -57,7 +58,7 @@ export default function EditExerciseScreen({ route, navigation }) {
         />
         <TextInput
           placeholder="Descripción (opcional)"
-          placeholderTextColor="#666"
+          placeholderTextColor={placeholder}
           value={description}
           onChangeText={setDesc}
           style={[
@@ -65,7 +66,7 @@ export default function EditExerciseScreen({ route, navigation }) {
             { backgroundColor: inputBg, borderColor, color: textColor },
           ]}
         />
-        <Button title="Guardar cambios" onPress={onSave} />
+        <Button title="Guardar cambios" onPress={onSave} color="#FFD700" />
       </View>
     </SafeAreaView>
   );
@@ -76,8 +77,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, justifyContent: 'center' },
   input: {
     borderWidth: 1,
-    padding: 8,
+    padding: 10,
     marginBottom: 12,
-    borderRadius: 4,
+    borderRadius: 8,
+    fontSize: 16,
   },
 });

@@ -1,10 +1,10 @@
-// src/screens/exercises/EserciziScreen.js
+// src/screens/exercises/ExerciseScreen.js
 import React, { useState, useEffect, useContext } from 'react';
 import { FlatList, TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import Background from '../../components/Background';
 import { ThemeContext } from '../../context/ThemeContext';
 
-export default function EserciziScreen({ navigation, route }) {
+export default function ExerciseScreen({ navigation, route }) {
   const { routine } = route.params;
   const [exercises, setExercises] = useState([]);
   const { isDark } = useContext(ThemeContext);
@@ -13,10 +13,10 @@ export default function EserciziScreen({ navigation, route }) {
     setExercises(routine?.exercises || []);
   }, [routine]);
 
-  // colores dinámicos
-  const cardBg    = isDark ? '#616161' : '#fff';
-  const nameColor = isDark ? '#fff'   : '#000';
-  const subColor  = isDark ? '#ccc'   : '#666';
+    // colores dinámicos
+  const cardBg    = isDark ? '#131922' : '#FFFFFF';
+  const nameColor = isDark ? '#FFFFFF' : '#111827';
+  const subColor  = isDark ? '#9AA4B2' : '#666666';
 
   return (
     <Background>

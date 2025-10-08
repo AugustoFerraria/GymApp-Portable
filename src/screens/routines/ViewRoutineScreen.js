@@ -34,10 +34,12 @@ export default function ViewRoutineScreen({ navigation }) {
     setRoutines(await deleteRoutine(id));
   };
 
-  const bgScreen    = isDark ? '#414141' : '#fff';
-  const cardBg      = isDark ? '#616161' : '#fff';
-  const labelColor  = isDark ? '#fff' : '#000';
-  const descColor   = isDark ? '#ccc' : '#666';
+  const bgScreen    = isDark ? '#0B0F14' : '#FFFFFF';
+  const cardBg      = isDark ? '#131922' : '#FFFFFF';
+  const labelColor  = isDark ? '#FFFFFF' : '#111827';
+  const descColor   = isDark ? '#9AA4B2' : '#666666';
+  const modalBg     = isDark ? '#1A1F29' : '#FFFFFF';
+  const modalText   = isDark ? '#FFFFFF' : '#111827';
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bgScreen }]}>
@@ -75,8 +77,8 @@ export default function ViewRoutineScreen({ navigation }) {
           onRequestClose={() => setModalVisible(false)}
         >
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>
+            <View style={[styles.modalContainer, { backgroundColor: modalBg }]}>
+              <Text style={[styles.modalTitle, { color: modalText }]}>
                 {selectedRoutine.name}
               </Text>
               <View style={styles.modalButtons}>
@@ -137,7 +139,6 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: '80%',
-    backgroundColor: '#fff',
     borderRadius: 8,
     padding: 20,
   },

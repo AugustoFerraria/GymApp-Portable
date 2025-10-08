@@ -23,7 +23,6 @@ export default function ManageExercisesScreen() {
   const { isDark } = useContext(ThemeContext);
   const [exercises, setExercises] = useState([]);
 
-  // Carga ejercicios al enfocar la pantalla
   useFocusEffect(
     useCallback(() => {
       (async () => {
@@ -33,7 +32,6 @@ export default function ManageExercisesScreen() {
     }, [])
   );
 
-  // Botón "+" en el header
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -46,11 +44,10 @@ export default function ManageExercisesScreen() {
           onPress={() => navigation.navigate('CrearEjercicio')}
         />
       ),
-      headerStyle: { backgroundColor: isDark ? '#414141' : '#FFD700' },
+      headerStyle: { backgroundColor: isDark ? '#0B0F14' : '#FFD700' },
     });
   }, [navigation, isDark]);
 
-  // Guardar orden al soltar
   const handleDragEnd = useCallback(
     async ({ data }) => {
       setExercises(data);
@@ -59,13 +56,12 @@ export default function ManageExercisesScreen() {
     []
   );
 
-  // Render de cada fila
   const renderItem = useCallback(
     ({ item, drag, isActive }) => {
-      const cardBg = isDark ? '#414141' : '#fff';
-      const cardActiveBg = isDark ? '#575757' : '#f0f0f0';
-      const textColor = isDark ? '#fff' : '#000';
-      const descColor = isDark ? '#ccc' : '#666';
+      const cardBg = isDark ? '#131922' : '#FFFFFF';
+      const cardActiveBg = isDark ? '#1F2937' : '#F3F4F6';
+      const textColor = isDark ? '#FFFFFF' : '#111827';
+      const descColor = isDark ? '#9AA4B2' : '#666666';
 
       return (
         <ScaleDecorator>
@@ -76,7 +72,7 @@ export default function ManageExercisesScreen() {
             ]}
           >
             <TouchableOpacity onPressIn={drag} style={styles.dragHandle}>
-              <Icon name="drag-handle" type="material" color="#999" size={24} />
+              <Icon name="drag-handle" type="material" color={isDark ? '#9AA4B2' : '#999'} size={24} />
             </TouchableOpacity>
 
             <View style={styles.cardContent}>
@@ -95,7 +91,7 @@ export default function ManageExercisesScreen() {
                 }
                 style={styles.iconSpacing}
               >
-                <Icon name="edit" type="material" size={28} color="#007AFF" />
+                <Icon name="edit" type="material" size={28} color="#2E86FF" />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() =>
@@ -127,7 +123,7 @@ export default function ManageExercisesScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#414141' : '#fff' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#0B0F14' : '#FFFFFF' }]}>
       <DraggableFlatList
         data={exercises}
         onDragEnd={handleDragEnd}

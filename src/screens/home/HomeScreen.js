@@ -37,12 +37,11 @@ function RoutineCard({ item, expanded, onToggle, navigation, onDelete }) {
   });
   const opacity = animation;
 
-  // Fondos claros/oscuro
-  const cardBg = isDark ? '#414141' : '#fff';
-  const menuBg = isDark ? '#414141' : '#f9f9f9';
-  const textColor = isDark ? '#fff' : '#000';
-  const descColor = isDark ? '#ccc' : '#666';
-  const arrowColor = isDark ? '#ccc' : '#666';
+  const cardBg   = isDark ? '#131922' : '#FFFFFF';
+  const menuBg   = isDark ? '#1A1F29' : '#F9F9F9';
+  const textColor= isDark ? '#FFFFFF' : '#111827';
+  const descColor= isDark ? '#9AA4B2' : '#666666';
+  const arrowCol = isDark ? '#9AA4B2' : '#666666';
 
   return (
     <View style={styles.cardContainer}>
@@ -60,7 +59,7 @@ function RoutineCard({ item, expanded, onToggle, navigation, onDelete }) {
             <Icon
               name="keyboard-arrow-down"
               type="material"
-              color={arrowColor}
+              color={arrowCol}
               size={24}
             />
           </Animated.View>
@@ -86,13 +85,8 @@ function RoutineCard({ item, expanded, onToggle, navigation, onDelete }) {
           }}
         >
           <View style={styles.menuItem}>
-            <Icon
-              name="visibility"
-              type="material"
-              color="#007AFF"
-              style={styles.menuIcon}
-            />
-            <Text style={[styles.menuText, { color: '#007AFF' }]}>Ver</Text>
+            <Icon name="visibility" type="material" color="#2E86FF" style={styles.menuIcon} />
+            <Text style={[styles.menuText, { color: '#2E86FF' }]}>Ver</Text>
           </View>
         </TouchableOpacity>
 
@@ -104,13 +98,8 @@ function RoutineCard({ item, expanded, onToggle, navigation, onDelete }) {
           }}
         >
           <View style={styles.menuItem}>
-            <Icon
-              name="edit"
-              type="material"
-              color="#007AFF"
-              style={styles.menuIcon}
-            />
-            <Text style={[styles.menuText, { color: '#007AFF' }]}>Editar</Text>
+            <Icon name="edit" type="material" color="#2E86FF" style={styles.menuIcon} />
+            <Text style={[styles.menuText, { color: '#2E86FF' }]}>Editar</Text>
           </View>
         </TouchableOpacity>
 
@@ -119,12 +108,7 @@ function RoutineCard({ item, expanded, onToggle, navigation, onDelete }) {
           onPress={() => onDelete(item.id)}
         >
           <View style={styles.menuItem}>
-            <Icon
-              name="delete"
-              type="material"
-              color="#FF4D4D"
-              style={styles.menuIcon}
-            />
+            <Icon name="delete" type="material" color="#FF4D4D" style={styles.menuIcon} />
             <Text style={[styles.menuText, { color: '#FF4D4D' }]}>Eliminar</Text>
           </View>
         </TouchableOpacity>
@@ -141,14 +125,10 @@ export default function HomeScreen() {
   const [expandedId, setExpandedId] = useState(null);
   const [fabOpen, setFabOpen] = useState(false);
 
-  // Botón tema en header
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity
-          onPress={toggleTheme}
-          style={{ marginRight: 16 }}
-        >
+        <TouchableOpacity onPress={toggleTheme} style={{ marginRight: 16 }}>
           <Icon
             name={isDark ? 'wb-sunny' : 'dark-mode'}
             type="material"
@@ -160,7 +140,6 @@ export default function HomeScreen() {
     });
   }, [navigation, isDark, toggleTheme]);
 
-  // Recarga al enfocar
   useFocusEffect(
     useCallback(() => {
       (async () => {
@@ -180,14 +159,14 @@ export default function HomeScreen() {
     setExpandedId(expandedId === id ? null : id);
   };
 
+  const emptyColor = isDark ? '#9AA4B2' : '#666666';
+
   return (
     <Background>
       <FlatList
         data={routines}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={
-          routines.length ? styles.list : styles.emptyList
-        }
+        contentContainerStyle={routines.length ? styles.list : styles.emptyList}
         renderItem={({ item }) => (
           <RoutineCard
             item={item}
@@ -198,7 +177,9 @@ export default function HomeScreen() {
           />
         )}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>No tienes rutinas aún</Text>
+          <Text style={[styles.emptyText, { color: emptyColor }]}>
+            No tienes rutinas aún
+          </Text>
         }
       />
 
@@ -235,10 +216,10 @@ const styles = StyleSheet.create({
   menu:         { borderRadius: 8 },
   menuButton:   { paddingVertical: 18, borderRadius: 6, alignSelf: 'stretch', paddingHorizontal: 16 },
   viewButton:   {},
-  editButton:   { backgroundColor: 'rgba(0,122,255,0.1)' },
+  editButton:   { backgroundColor: 'rgba(46,134,255,0.1)' },
   deleteButton: { backgroundColor: 'rgba(255,77,77,0.1)' },
   menuItem:     { flexDirection: 'row', alignItems: 'center' },
   menuIcon:     { marginRight: 8 },
   menuText:     { fontSize: 16 },
-  emptyText:    { textAlign: 'center', color: '#666', marginTop: 32 },
+  emptyText:    { textAlign: 'center', marginTop: 32 },
 });

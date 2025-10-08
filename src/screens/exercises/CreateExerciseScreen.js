@@ -17,10 +17,11 @@ export default function CreateExerciseScreen({ navigation, route }) {
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
 
-  const bgGray = '#414141';
-  const inputBg = '#fff';
-  const textColor = isDark ? '#000' : '#000';
-  const borderColor = isDark ? '#666' : '#ddd';
+  const bgScreen       = isDark ? '#0B0F14' : '#FFFFFF';
+  const inputBg        = isDark ? '#131922' : '#FFFFFF';
+  const textColor      = isDark ? '#FFFFFF' : '#111827';
+  const placeholder    = isDark ? '#9AA4B2' : '#666666';
+  const borderColor    = isDark ? '#1F2937' : '#DDDDDD';
 
   const handleCrear = async () => {
     if (!nombre.trim()) {
@@ -38,11 +39,11 @@ export default function CreateExerciseScreen({ navigation, route }) {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bgGray }]}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bgScreen }]}>
       <View style={styles.container}>
         <TextInput
           placeholder="Nombre del ejercicio"
-          placeholderTextColor="#666"
+          placeholderTextColor={placeholder}
           value={nombre}
           onChangeText={setNombre}
           style={[
@@ -52,7 +53,7 @@ export default function CreateExerciseScreen({ navigation, route }) {
         />
         <TextInput
           placeholder="Descripción (opcional)"
-          placeholderTextColor="#666"
+          placeholderTextColor={placeholder}
           value={descripcion}
           onChangeText={setDescripcion}
           style={[
@@ -60,7 +61,7 @@ export default function CreateExerciseScreen({ navigation, route }) {
             { backgroundColor: inputBg, borderColor, color: textColor },
           ]}
         />
-        <Button title="Crear ejercicio" onPress={handleCrear} />
+        <Button title="Crear ejercicio" onPress={handleCrear} color="#FFD700" />
       </View>
     </SafeAreaView>
   );
@@ -70,10 +71,11 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   container: { flex: 1, padding: 16, justifyContent: 'center' },
   input: {
-    height: 40,
+    height: 44,
     borderWidth: 1,
     marginBottom: 12,
-    paddingHorizontal: 8,
-    borderRadius: 4,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    fontSize: 16,
   },
 });
