@@ -19,15 +19,19 @@ import {
   getExercises,
   deleteProgress,
   updateProgress,
+  getExercisesSortMode,
+  SORT_MODE,
 } from "../../services/storageService";
 import { ThemeContext } from "../../context/ThemeContext";
 
 export default function ManageProgressScreen() {
   const { isDark } = useContext(ThemeContext);
+
   const [allProgresses, setAllProgresses] = useState([]);
   const [exercises, setExercises] = useState([]);
   const [selectedExercise, setSelectedExercise] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
   const [editingKey, setEditingKey] = useState(null);
   const [editWeight, setEditWeight] = useState("");
   const [editReps, setEditReps] = useState("");
@@ -44,16 +48,34 @@ export default function ManageProgressScreen() {
   const placeholderColor = isDark ? "#64748B" : "#666666";
   const borderColor = "#FFD700";
 
+  const sortByName = useCallback((list, mode) => {
+    const sorted = [...list].sort((a, b) => {
+      const an = (a?.name ?? "");
+      const bn = (b?.name ?? "");
+      const cmp = an.localeCompare(bn, undefined, { sensitivity: "base" });
+      return mode === SORT_MODE.AZ ? cmp : -cmp;
+    });
+    return sorted;
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       (async () => {
         setAllProgresses(await getProgresses());
-        setExercises(await getExercises());
+
+        const mode = await getExercisesSortMode();
+        const customOrdered = await getExercises(); // SIEMPRE custom sagrado
+
+        const viewExercises =
+          mode === SORT_MODE.CUSTOM ? customOrdered : sortByName(customOrdered, mode);
+
+        setExercises(viewExercises);
       })();
-    }, [])
+    }, [sortByName])
   );
 
   const makeKey = (p) => `${p.exerciseId}__${p.date}`;
+
   const displayed = allProgresses
     .filter((p) => !selectedExercise || p.exerciseId === selectedExercise)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -110,10 +132,7 @@ export default function ManageProgressScreen() {
         {isEd ? (
           <>
             <TextInput
-              style={[
-                styles.input,
-                { backgroundColor: inputBg, color: inputTextColor },
-              ]}
+              style={[styles.input, { backgroundColor: inputBg, color: inputTextColor }]}
               value={editWeight}
               onChangeText={setEditWeight}
               keyboardType="numeric"
@@ -121,10 +140,7 @@ export default function ManageProgressScreen() {
               placeholderTextColor={placeholderColor}
             />
             <TextInput
-              style={[
-                styles.input,
-                { backgroundColor: inputBg, color: inputTextColor },
-              ]}
+              style={[styles.input, { backgroundColor: inputBg, color: inputTextColor }]}
               value={editReps}
               onChangeText={setEditReps}
               keyboardType="numeric"
@@ -163,9 +179,7 @@ export default function ManageProgressScreen() {
                 <Text style={styles.btnText}>Editar</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => handleDelete(item)}>
-                <Text style={[styles.btnText, styles.deleteText]}>
-                  Eliminar
-                </Text>
+                <Text style={[styles.btnText, styles.deleteText]}>Eliminar</Text>
               </TouchableOpacity>
             </>
           )}
@@ -178,18 +192,10 @@ export default function ManageProgressScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: bgScreen }]}>
       <View style={[styles.filters, { backgroundColor: filterBg }]}>
         <TouchableOpacity
-          style={[
-            styles.dropdownBtn,
-            { backgroundColor: inputBg, borderColor },
-          ]}
+          style={[styles.dropdownBtn, { backgroundColor: inputBg, borderColor }]}
           onPress={() => setDropdownOpen((o) => !o)}
         >
-          <Text
-            style={[
-              styles.dropdownBtnText,
-              { color: isDark ? "#FFF" : labelColor },
-            ]}
-          >
+          <Text style={[styles.dropdownBtnText, { color: isDark ? "#FFF" : labelColor }]}>
             {displayLabel}
           </Text>
 
@@ -203,10 +209,7 @@ export default function ManageProgressScreen() {
 
         {dropdownOpen && (
           <ScrollView
-            style={[
-              styles.dropdownContainer,
-              { backgroundColor: bgScreen, borderColor },
-            ]}
+            style={[styles.dropdownContainer, { backgroundColor: bgScreen, borderColor }]}
             nestedScrollEnabled
           >
             {exercises.map((opt) => (
@@ -233,9 +236,7 @@ export default function ManageProgressScreen() {
         contentContainerStyle={styles.list}
         renderItem={renderItem}
         ListEmptyComponent={
-          <Text style={[styles.empty, { color: subTextColor }]}>
-            No hay progresos
-          </Text>
+          <Text style={[styles.empty, { color: subTextColor }]}>No hay progresos</Text>
         }
       />
     </SafeAreaView>

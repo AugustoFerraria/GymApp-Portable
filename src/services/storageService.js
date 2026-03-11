@@ -1,34 +1,169 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import defaultExercises from '../../assets/defaultExercises.json';
 
-const EXERCISES_KEY   = 'mis_ejercicios';
-const ROUTINES_KEY    = 'mis_rutinas';
-const PROGRESSES_KEY  = 'mis_progresos';
+const EXERCISES_KEY = 'mis_ejercicios';
+const ROUTINES_KEY = 'mis_rutinas';
+const PROGRESSES_KEY = 'mis_progresos';
 
-// — Ejercicios —
-// Si no hay ejercicios guardados o el array está vacío, carga defaultExercises y los guarda.
-export async function getExercises() {
+
+const EXERCISES_CUSTOM_ORDER_KEY = 'mis_ejercicios_custom_order';
+const EXERCISES_SORT_MODE_KEY = 'mis_ejercicios_sort_mode';
+
+export const SORT_MODE = {
+  CUSTOM: 'CUSTOM',
+  AZ: 'AZ',
+  ZA: 'ZA',
+};
+
+function normalizeArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function reorderByIds(items, ids) {
+  const map = new Map(items.map(i => [i.id, i]));
+  const ordered = [];
+
+  // 1) Primero, lo que está en ids, en ese orden
+  for (const id of normalizeArray(ids)) {
+    const it = map.get(id);
+    if (it) ordered.push(it);
+  }
+
+  // 2) Luego, cualquier item nuevo que no esté en ids (conservando orden actual)
+  const idSet = new Set(normalizeArray(ids));
+  for (const it of items) {
+    if (!idSet.has(it.id)) ordered.push(it);
+  }
+
+  return ordered;
+}
+
+async function getCustomOrderIds() {
+  const json = await AsyncStorage.getItem(EXERCISES_CUSTOM_ORDER_KEY);
+  if (!json) return null;
+  try {
+    const ids = JSON.parse(json);
+    return Array.isArray(ids) ? ids : null;
+  } catch {
+    return null;
+  }
+}
+
+async function setCustomOrderIds(ids) {
+  await AsyncStorage.setItem(EXERCISES_CUSTOM_ORDER_KEY, JSON.stringify(ids));
+}
+
+async function ensureSeededExercises() {
   const json = await AsyncStorage.getItem(EXERCISES_KEY);
   if (json !== null) {
     try {
       const arr = JSON.parse(json);
-      // Si hay datos existentes y no está vacío, los devolvemos
-      if (Array.isArray(arr) && arr.length > 0) {
-        return arr;
-      }
+      if (Array.isArray(arr) && arr.length > 0) return arr;
     } catch {
-      // Si parse falla, continuará al sembrado
     }
   }
-  // Sembrado inicial o cuando arr está vacío
+
   await AsyncStorage.setItem(EXERCISES_KEY, JSON.stringify(defaultExercises));
   return defaultExercises;
 }
 
+/**
+ * — Ejercicios —
+ * Fuente de verdad: siempre devolvemos ejercicios en orden CUSTOM persistido.
+ * Si no existe orden custom aún, se inicializa con el orden actual de los ejercicios.
+ */
+export async function getExercises() {
+  const arr = await ensureSeededExercises();
+  const storedIds = await getCustomOrderIds();
+
+  // Si no había orden custom, inicializarlo con el orden actual (o seeded)
+  if (!storedIds) {
+    const initialIds = arr.map(e => e.id);
+    await setCustomOrderIds(initialIds);
+    return arr;
+  }
+
+  // Reconciliar: aplicar ids guardados y agregar nuevos al final
+  const ordered = reorderByIds(arr, storedIds);
+  const nextIds = ordered.map(e => e.id);
+
+  // Si cambió (nuevos/eliminados/reparación), persistimos ambos para consistencia
+  await setCustomOrderIds(nextIds);
+  await AsyncStorage.setItem(EXERCISES_KEY, JSON.stringify(ordered));
+
+  return ordered;
+}
+
+/**
+ * Guardar un ejercicio nuevo:
+ * - Se agrega al array de ejercicios
+ * - Se agrega su id al final del orden CUSTOM persistido
+ */
 export async function saveExercise(exercise) {
+  const arr = await getExercises(); // ya viene en orden custom
+  const newArr = [...arr, exercise];
+
+  // actualizar custom order (append)
+  const ids = newArr.map(e => e.id);
+  await setCustomOrderIds(ids);
+
+  await AsyncStorage.setItem(EXERCISES_KEY, JSON.stringify(newArr));
+}
+
+/**
+ * Eliminar ejercicio:
+ * - Elimina del array
+ * - Elimina su id del orden CUSTOM persistido
+ */
+export async function deleteExercise(exerciseId) {
   const arr = await getExercises();
-  arr.push(exercise);
+  const filtered = arr.filter(e => e.id !== exerciseId);
+
+  const ids = filtered.map(e => e.id);
+  await setCustomOrderIds(ids);
+
+  await AsyncStorage.setItem(EXERCISES_KEY, JSON.stringify(filtered));
+  return filtered;
+}
+
+/**
+ * Actualizar ejercicio (no cambia orden)
+ */
+export async function updateExercise(updated) {
+  const arr = await getExercises();
+  const newArr = arr.map(e => (e.id === updated.id ? updated : e));
+  await AsyncStorage.setItem(EXERCISES_KEY, JSON.stringify(newArr));
+  return newArr;
+}
+
+/**
+ * Guardar orden de ejercicios:
+ * IMPORTANTE: esto representa el orden CUSTOM del usuario.
+ * Se persiste tanto la lista como el array de IDs de custom order.
+ */
+export async function saveExercisesOrder(exercisesArray) {
+  const arr = normalizeArray(exercisesArray);
   await AsyncStorage.setItem(EXERCISES_KEY, JSON.stringify(arr));
+  await setCustomOrderIds(arr.map(e => e.id));
+  return arr;
+}
+
+/**
+ * NUEVO: modo de orden persistido (CUSTOM/AZ/ZA)
+ */
+export async function getExercisesSortMode() {
+  const v = await AsyncStorage.getItem(EXERCISES_SORT_MODE_KEY);
+  if (v === SORT_MODE.AZ || v === SORT_MODE.ZA || v === SORT_MODE.CUSTOM) return v;
+  return SORT_MODE.CUSTOM;
+}
+
+export async function saveExercisesSortMode(mode) {
+  const safe =
+    mode === SORT_MODE.AZ || mode === SORT_MODE.ZA || mode === SORT_MODE.CUSTOM
+      ? mode
+      : SORT_MODE.CUSTOM;
+  await AsyncStorage.setItem(EXERCISES_SORT_MODE_KEY, safe);
+  return safe;
 }
 
 // — Rutinas —
@@ -89,7 +224,7 @@ export async function updateProgress(progressEntry, newValues) {
       p.exerciseId === progressEntry.exerciseId &&
       p.date === progressEntry.date &&
       ((progressEntry.weight != null && p.weight === progressEntry.weight) ||
-       (progressEntry.reps   != null && p.reps   === progressEntry.reps))
+        (progressEntry.reps != null && p.reps === progressEntry.reps))
     ) {
       return { ...p, ...newValues };
     }
@@ -111,29 +246,8 @@ export async function deleteRoutine(routineId) {
 export async function updateRoutine(updatedRoutine) {
   const json = await AsyncStorage.getItem(ROUTINES_KEY);
   const arr  = json ? JSON.parse(json) : [];
-  const newArr = arr.map(r =>
-    r.id === updatedRoutine.id ? updatedRoutine : r
-  );
+  const newArr = arr.map(r => 
+    (r.id === updatedRoutine.id ? updatedRoutine : r));
   await AsyncStorage.setItem(ROUTINES_KEY, JSON.stringify(newArr));
   return newArr;
-}
-
-// — Ejercicios: eliminar y actualizar —
-export async function deleteExercise(exerciseId) {
-  const arr = await getExercises();
-  const filtered = arr.filter(e => e.id !== exerciseId);
-  await AsyncStorage.setItem(EXERCISES_KEY, JSON.stringify(filtered));
-  return filtered;
-}
-
-export async function updateExercise(updated) {
-  const arr = await getExercises();
-  const newArr = arr.map(e => e.id === updated.id ? updated : e);
-  await AsyncStorage.setItem(EXERCISES_KEY, JSON.stringify(newArr));
-  return newArr;
-}
-
-export async function saveExercisesOrder(exercisesArray) {
-  await AsyncStorage.setItem(EXERCISES_KEY, JSON.stringify(exercisesArray));
-  return exercisesArray;
 }
