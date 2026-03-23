@@ -1,8 +1,9 @@
 // src/components/ProgressChart.js
 
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text as RNText, StyleSheet, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
+import { Text as SvgText } from 'react-native-svg';
 
 const screenWidth = Dimensions.get('window').width - 40;
 const chartHeight = 300;
@@ -14,7 +15,7 @@ export default function ProgressChart({ data, viewMode }) {
     return typeof v === 'number' && !isNaN(v);
   });
   if (!filtered.length) {
-    return <Text style={styles.empty}>No hay datos disponibles</Text>;
+    return <RNText style={styles.empty}>No hay datos disponibles</RNText>;
   }
 
   const labels = filtered.map(item => {
@@ -24,7 +25,6 @@ export default function ProgressChart({ data, viewMode }) {
   const values = filtered.map(item =>
     viewMode === 'Peso' ? item.weight : item.reps
   );
-  const maxVal = Math.max(...values, 1);
 
   const getPointColors = (index) => {
     const isFailure = Boolean(filtered[index]?.failure);
@@ -39,12 +39,23 @@ export default function ProgressChart({ data, viewMode }) {
   return (
     <View style={styles.container}>
       <LineChart
-        data={{ labels, datasets: [{ data: values,},],}}
+        data={{ labels, datasets: [{ data: values }] }}
         width={screenWidth}
         height={chartHeight}
+        yAxisSuffix={viewMode === 'Peso' ? 'kg' : ''}
+        yAxisInterval={1}
+        fromZero
+        segments={4}
+        withInnerLines
+        withDots
+        withShadow
         chartConfig={{
-          color:       (opacity = 1) => `rgba(243,243,25,${opacity})`, // línea
-          labelColor:  (opacity = 1) => `rgba(243,243,25,${opacity})`, // ejes
+          backgroundColor: '#B0B0B0',
+          backgroundGradientFrom: 'rgba(70, 77, 79, 0.6)',
+          backgroundGradientTo: 'rgba(0, 0, 0, 0.6)',
+          decimalPlaces: 0,
+          color: (opacity = 1) => `rgba(243,243,25,${opacity})`,
+          labelColor: (opacity = 1) => `rgba(243,243,25,${opacity})`,
           style: { borderRadius: 16 },
           propsForBackgroundLines: {
             strokeDasharray: [6, 4],
@@ -61,28 +72,19 @@ export default function ProgressChart({ data, viewMode }) {
           strokeWidth: '2',
           stroke: getPointColors(index).stroke,
         })}
-        decorator={() =>
-          values.map((val, i) => {
-            const x = (i * screenWidth) / values.length + 20;
-            const y = (1 - val / maxVal) * (chartHeight - 40) + 20;
-
-            return (
-              <Text
-                key={`dot-label-${i}`}
-                style={[
-                  styles.dotLabel,
-                  {
-                    left: x - 10,
-                    top: y - 20,
-                    color: getPointColors(i).text,
-                  },
-                ]}
-              >
-                {val}
-              </Text>
-            );
-          })
-        }
+        renderDotContent={({ x, y, index, indexData }) => (
+          <SvgText
+            key={`dot-label-${index}`}
+            x={x}
+            y={y + 22}
+            fill={getPointColors(index).text}
+            fontSize="12"
+            fontWeight="bold"
+            textAnchor="middle"
+          >
+            {indexData}
+          </SvgText>
+        )}
       />
     </View>
   );
@@ -101,11 +103,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#666',
     marginVertical: 16,
-  },
-  dotLabel: {
-    position: 'absolute',
-    fontSize: 12,
-    fontWeight: 'bold',
-    backgroundColor: 'transparent',
   },
 });
