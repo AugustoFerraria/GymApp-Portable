@@ -28,46 +28,39 @@ export default function ProgressChart({ data, viewMode }) {
     });
   }, [filtered]);
 
-  const targetValues = useMemo(() => {
+ const targetValues = useMemo(() => {
     return filtered.map(item =>
       viewMode === 'Peso' ? item.weight : item.reps
     );
   }, [filtered, viewMode]);
 
-  // Nueva feature: firma estable del dataset para que el effect
-  // no se dispare por referencias nuevas de arrays en cada render.
+  // firma estable para el effect.
   const valuesSignature = useMemo(() => {
     return `${viewMode}|${labels.join('|')}|${targetValues.join('|')}`;
   }, [viewMode, labels, targetValues]);
 
-  // Nueva feature: valores realmente renderizados por el chart.
-  // Normalmente son iguales a targetValues, pero cuando entra
-  // un punto nuevo al final lo hacemos aparecer desde y = 0.
+  // valores renderizados por el chart.
   const [animatedValues, setAnimatedValues] = useState(targetValues);
 
-  // Nueva feature: opacidad del último punto y su label.
-  // Se usa para el "appear" de 0.25s antes de la subida.
+  // opacidad del último punto.
   const [lastPointOpacity, setLastPointOpacity] = useState(1);
 
-  // Nueva feature: referencia al dataset anterior para detectar
-  // cuándo realmente se agregó un punto nuevo al final.
+  // referencia al dataset anterior.
   const previousValuesRef = useRef([]);
 
-  // Nueva feature: controlamos el primer render para no animar
-  // cuando el gráfico simplemente se monta por primera vez.
+  // evitar animación en el primer render.
   const isFirstRenderRef = useRef(true);
 
-  // Nueva feature: animación del fade-in del último punto.
+  // animación de fade-in del último punto.
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  // Nueva feature: animación de subida vertical del último punto
-  // desde 0 hasta su valor final.
+  // animación vertical del último punto.
   const riseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const previousValues = previousValuesRef.current;
 
-    // Primer render: mostrar directamente los datos actuales.
+    // Primer render: mostrar datos actuales.
     if (isFirstRenderRef.current) {
       isFirstRenderRef.current = false;
       setAnimatedValues(targetValues);
@@ -76,17 +69,14 @@ export default function ProgressChart({ data, viewMode }) {
       return;
     }
 
-    // Detectar si se agregó exactamente un punto nuevo al final
-    // y los anteriores se mantuvieron iguales.
+    // Detectar si se agregó un punto nuevo al final.
     const isNewPointAppended =
       previousValues.length > 0 &&
       targetValues.length === previousValues.length + 1 &&
       previousValues.every((value, index) => value === targetValues[index]);
 
     if (!isNewPointAppended) {
-      // Si cambió el modo, se editó un valor viejo, o vino cualquier
-      // otro cambio que no sea "agregar un punto nuevo al final",
-      // renderizamos normal para evitar efectos raros.
+      // Cualquier otro cambio se renderiza normal.
       setAnimatedValues(targetValues);
       setLastPointOpacity(1);
       previousValuesRef.current = targetValues;
@@ -96,7 +86,7 @@ export default function ProgressChart({ data, viewMode }) {
     const lastIndex = targetValues.length - 1;
     const finalLastValue = targetValues[lastIndex];
 
-    // Nueva feature: el nuevo punto arranca en y = 0.
+    // el nuevo punto arranca en y = 0.
     const startValues = [...previousValues, 0];
 
     setAnimatedValues(startValues);
@@ -159,8 +149,7 @@ export default function ProgressChart({ data, viewMode }) {
     };
   };
 
-  // Nueva feature: detectar si el índice actual es el último punto
-  // para aplicarle el fade-in cuando recién se agrega.
+  // fade-in sólo para el último punto.
   const getPointOpacity = (index) => {
     return index === values.length - 1 ? lastPointOpacity : 1;
   };
