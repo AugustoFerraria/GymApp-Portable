@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text as RNText, StyleSheet, Dimensions, Animated } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
-import { Text as SvgText, Rect } from 'react-native-svg';
+import { Text as SvgText } from 'react-native-svg';
 
 const screenWidth = Dimensions.get('window').width - 40;
 const chartHeight = 300;
@@ -28,73 +28,46 @@ export default function ProgressChart({ data, viewMode }) {
     });
   }, [filtered]);
 
-  // clave por día para agrupar puntos.
-  const dayKeys = useMemo(() => {
-    return filtered.map(item => {
-      const d = new Date(item.date);
-
-      if (isNaN(d)) return 'invalid-date';
-
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-
-      return `${year}-${month}-${day}`;
-    });
-  }, [filtered]);
-
-  // grupos consecutivos del mismo día.
-  const dayGroups = useMemo(() => {
-    const groups = [];
-
-    dayKeys.forEach((dayKey, index) => {
-      if (index === 0 || dayKey !== dayKeys[index - 1]) {
-        groups.push({
-          dayKey,
-          startIndex: index,
-          endIndex: index,
-        });
-      } else {
-        groups[groups.length - 1].endIndex = index;
-      }
-    });
-
-    return groups;
-  }, [dayKeys]);
-
   const targetValues = useMemo(() => {
     return filtered.map(item =>
       viewMode === 'Peso' ? item.weight : item.reps
     );
   }, [filtered, viewMode]);
 
-  // firma estable para el effect.
+  // Nueva feature: firma estable del dataset para que el effect
+  // no se dispare por referencias nuevas de arrays en cada render.
   const valuesSignature = useMemo(() => {
     return `${viewMode}|${labels.join('|')}|${targetValues.join('|')}`;
   }, [viewMode, labels, targetValues]);
 
-  // valores renderizados por el chart.
+  // Nueva feature: valores realmente renderizados por el chart.
+  // Normalmente son iguales a targetValues, pero cuando entra
+  // un punto nuevo al final lo hacemos aparecer desde y = 0.
   const [animatedValues, setAnimatedValues] = useState(targetValues);
 
-  // opacidad del último punto.
+  // Nueva feature: opacidad del último punto y su label.
+  // Se usa para el "appear" de 0.25s antes de la subida.
   const [lastPointOpacity, setLastPointOpacity] = useState(1);
 
-  // referencia al dataset anterior.
+  // Nueva feature: referencia al dataset anterior para detectar
+  // cuándo realmente se agregó un punto nuevo al final.
   const previousValuesRef = useRef([]);
 
-  // evitar animación en el primer render.
+  // Nueva feature: controlamos el primer render para no animar
+  // cuando el gráfico simplemente se monta por primera vez.
   const isFirstRenderRef = useRef(true);
 
-  // animación de fade-in del último punto.
+  // Nueva feature: animación del fade-in del último punto.
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  // animación vertical del último punto.
+  // Nueva feature: animación de subida vertical del último punto
+  // desde 0 hasta su valor final.
   const riseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const previousValues = previousValuesRef.current;
 
-    // Primer render: mostrar datos actuales.
+    // Primer render: mostrar directamente los datos actuales.
     if (isFirstRenderRef.current) {
       isFirstRenderRef.current = false;
       setAnimatedValues(targetValues);
@@ -103,14 +76,17 @@ export default function ProgressChart({ data, viewMode }) {
       return;
     }
 
-    // Detectar si se agregó un punto nuevo al final.
+    // Detectar si se agregó exactamente un punto nuevo al final
+    // y los anteriores se mantuvieron iguales.
     const isNewPointAppended =
       previousValues.length > 0 &&
       targetValues.length === previousValues.length + 1 &&
       previousValues.every((value, index) => value === targetValues[index]);
 
     if (!isNewPointAppended) {
-      // Cualquier otro cambio se renderiza normal.
+      // Si cambió el modo, se editó un valor viejo, o vino cualquier
+      // otro cambio que no sea "agregar un punto nuevo al final",
+      // renderizamos normal para evitar efectos raros.
       setAnimatedValues(targetValues);
       setLastPointOpacity(1);
       previousValuesRef.current = targetValues;
@@ -120,7 +96,7 @@ export default function ProgressChart({ data, viewMode }) {
     const lastIndex = targetValues.length - 1;
     const finalLastValue = targetValues[lastIndex];
 
-    // el nuevo punto arranca en y = 0.
+    // Nueva feature: el nuevo punto arranca en y = 0.
     const startValues = [...previousValues, 0];
 
     setAnimatedValues(startValues);
@@ -183,64 +159,10 @@ export default function ProgressChart({ data, viewMode }) {
     };
   };
 
-  // fade-in sólo para el último punto.
+  // Nueva feature: detectar si el índice actual es el último punto
+  // para aplicarle el fade-in cuando recién se agrega.
   const getPointOpacity = (index) => {
     return index === values.length - 1 ? lastPointOpacity : 1;
-  };
-
-  // bandas verticales por día.
-  const renderDayBands = ({ x, width, height }) => {
-    if (values.length < 2 || dayGroups.length < 2) {
-      return null;
-    }
-
-    // ancho visual de cada grupo.
-    const getBandBounds = (startIndex, endIndex) => {
-      const startX = x(startIndex);
-      const endX = x(endIndex);
-
-      let left;
-      if (startIndex === 0) {
-        const nextX = x(1);
-        left = startX - (nextX - startX) / 2;
-      } else {
-        left = (x(startIndex - 1) + startX) / 2;
-      }
-
-      let right;
-      if (endIndex === values.length - 1) {
-        const prevX = x(values.length - 2);
-        right = endX + (endX - prevX) / 2;
-      } else {
-        right = (endX + x(endIndex + 1)) / 2;
-      }
-
-      const clampedLeft = Math.max(0, left);
-      const clampedRight = Math.min(width, right);
-
-      return {
-        x: clampedLeft,
-        width: Math.max(0, clampedRight - clampedLeft),
-      };
-    };
-
-    return dayGroups.map((group, groupIndex) => {
-      // alternar bandas para separar días.
-      if (groupIndex % 2 === 0) return null;
-
-      const band = getBandBounds(group.startIndex, group.endIndex);
-
-      return (
-        <Rect
-          key={`day-band-${group.dayKey}-${groupIndex}`}
-          x={band.x}
-          y={0}
-          width={band.width}
-          height={height}
-          fill="rgba(255,255,255,0.06)"
-        />
-      );
-    });
   };
 
   return (
@@ -257,7 +179,6 @@ export default function ProgressChart({ data, viewMode }) {
   withDots
   withShadow
   withVerticalLabels={false}
-  decorator={(props) => renderDayBands(props)}
   chartConfig={{
     backgroundColor: '#B0B0B0',
     backgroundGradientFrom: 'rgba(70, 77, 79, 0.6)',
