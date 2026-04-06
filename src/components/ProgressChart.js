@@ -9,11 +9,12 @@ const screenWidth = Dimensions.get('window').width - 40;
 const chartHeight = 300;
 
 const truncateToOneDecimal = (value) => {
-  return Math.trunc(value * 10) / 10;
+  return Math.trunc(Number(value) * 10) / 10;
 };
 
 const formatTruncatedValue = (value) => {
-  return truncateToOneDecimal(Number(value)).toFixed(1);
+  const truncated = truncateToOneDecimal(value);
+  return Number.isInteger(truncated) ? String(truncated) : truncated.toFixed(1);
 };
 
 export default function ProgressChart({ data, viewMode }) {
