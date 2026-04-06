@@ -8,6 +8,14 @@ import { Text as SvgText } from 'react-native-svg';
 const screenWidth = Dimensions.get('window').width - 40;
 const chartHeight = 300;
 
+const truncateToOneDecimal = (value) => {
+  return Math.trunc(value * 10) / 10;
+};
+
+const formatTruncatedValue = (value) => {
+  return truncateToOneDecimal(Number(value)).toFixed(1);
+};
+
 export default function ProgressChart({ data, viewMode }) {
   // Filtrar sólo valores numéricos válidos
   const filtered = useMemo(() => {
@@ -172,7 +180,7 @@ export default function ProgressChart({ data, viewMode }) {
     backgroundColor: '#B0B0B0',
     backgroundGradientFrom: 'rgba(70, 77, 79, 0.6)',
     backgroundGradientTo: 'rgba(0, 0, 0, 0.6)',
-    decimalPlaces: 0,
+    decimalPlaces: 1,
     color: (opacity = 1) => `rgba(243,243,25,${opacity})`,
     labelColor: (opacity = 1) => `rgba(243,243,25,${opacity})`,
     style: { borderRadius: 16 },
@@ -185,6 +193,7 @@ export default function ProgressChart({ data, viewMode }) {
   }}
   style={styles.chart}
   bezier
+  formatYLabel={(value) => formatTruncatedValue(value)}
   getDotColor={(_, index) => getPointColors(index).fill}
   getDotProps={(_, index) => ({
     r: '6',
@@ -203,7 +212,7 @@ export default function ProgressChart({ data, viewMode }) {
       fontWeight="bold"
       textAnchor="middle"
     >
-      {Math.round(indexData)}
+      {formatTruncatedValue(indexData)}
     </SvgText>
   )}
 />
