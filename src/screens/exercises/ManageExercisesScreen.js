@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import DraggableFlatList, { ScaleDecorator } from 'react-native-draggable-flatlist';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Icon } from 'react-native-elements';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
 
 // Paper (ya lo tenés en App.js)
 import { Portal, Modal, RadioButton, Button } from 'react-native-paper';

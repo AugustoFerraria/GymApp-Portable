@@ -13,7 +13,7 @@ import {
   Switch,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { Icon } from "react-native-elements";
+import { MaterialIcons as Icon } from '@expo/vector-icons';
 import {
   getProgresses,
   getExercises,

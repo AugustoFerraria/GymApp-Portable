@@ -3,7 +3,6 @@
     "name": "GymApp",
     "slug": "personalroutines",
     "version": "1.4.0",
-    "sdkVersion": "53.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -38,7 +37,6 @@
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0
-    },
-    "releaseChannel": "preview"
+    }
   }
 }

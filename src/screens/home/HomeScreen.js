@@ -12,7 +12,7 @@ import { FAB } from 'react-native-paper';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { getRoutines, deleteRoutine } from '../../services/storageService';
 import Background from '../../components/Background';
-import { Icon } from 'react-native-elements';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
 import { ThemeContext } from '../../context/ThemeContext';
 
 function RoutineCard({ item, expanded, onToggle, navigation, onDelete }) {

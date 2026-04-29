@@ -5,7 +5,7 @@ import { NavigationContainer, DefaultTheme, DarkTheme as RNDarkTheme } from '@re
 import { createBottomTabNavigator }  from '@react-navigation/bottom-tabs';
 import { createStackNavigator }       from '@react-navigation/stack';
 import { Provider as PaperProvider }  from 'react-native-paper';
-import { Icon }                      from 'react-native-elements';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
 
 import { ThemeProvider, ThemeContext } from './src/context/ThemeContext';
 

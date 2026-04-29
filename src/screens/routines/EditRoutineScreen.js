@@ -12,7 +12,7 @@ import {
   Modal,
   FlatList,
 } from 'react-native';
-import { Icon } from 'react-native-elements';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import { getExercises, getRoutines, updateRoutine } from '../../services/storageService';
 import { ThemeContext } from '../../context/ThemeContext';

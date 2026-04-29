@@ -16,7 +16,7 @@ import {
   Vibration,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { Icon } from "react-native-elements";
+import { MaterialIcons as Icon } from '@expo/vector-icons';
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Portal, Modal } from "react-native-paper";
 
