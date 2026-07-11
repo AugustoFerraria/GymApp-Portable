@@ -33,10 +33,17 @@
         "projectId": "43051a9c-5bd7-46b9-b1fa-87ad783b3615"
       }
     },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "updates": {
+      "url": "https://u.expo.dev/43051a9c-5bd7-46b9-b1fa-87ad783b3615",
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0
-    }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
