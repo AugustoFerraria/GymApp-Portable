@@ -22,7 +22,6 @@ export function ThemeProvider({ children }) {
   const [isDark, setIsDark] = useState(false);
   const [loadingTheme, setLoadingTheme] = useState(true);
 
-  // Rehidratar preferencia al iniciar
   useEffect(() => {
     (async () => {
       try {
