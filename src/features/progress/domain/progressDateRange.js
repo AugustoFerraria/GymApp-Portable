@@ -42,22 +42,6 @@ export function filterProgressByDateRange(data, range) {
   });
 }
 
-export function hasProgressChartData(data, range) {
-  return filterProgressByDateRange(data, range).some(
-    entry => typeof entry.weight === 'number' && !Number.isNaN(entry.weight)
-  );
-}
-
-export function getAvailableProgressPeriods(data, now = new Date()) {
-  return Object.fromEntries(PROGRESS_PERIODS.map(option => [
-    option.value,
-    // The calendar stays available to choose dates; validate the range on Apply.
-    option.value === 'custom' || hasProgressChartData(data, getProgressDateRange(option.value, null, null, now)),
-  ]));
-}
-
-// Original header-calendar behavior: keep the catalog order, but only include
-// exercises with at least one record inside the selected interval.
 export function getExercisesWithProgressInRange(exercises, progresses, range) {
   if (!range) return exercises;
   const eligibleIds = new Set(
