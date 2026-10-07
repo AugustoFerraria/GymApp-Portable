@@ -11,7 +11,7 @@ const SHORT_LABELS = {
   month: '1M',
 };
 
-export default function ProgressPeriodSelector({ period, onSelect, rangeLabel, isDark }) {
+export default function ProgressPeriodSelector({ period, onSelect, rangeLabel, isDark, availablePeriods }) {
   const textColor = isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(17, 24, 39, 0.6)';
   const activeColor = isDark ? '#FFE477' : '#756000';
   const [barWidth, setBarWidth] = useState(0);
@@ -68,15 +68,18 @@ export default function ProgressPeriodSelector({ period, onSelect, rangeLabel, i
         )}
         {PROGRESS_PERIODS.map(option => {
           const selected = period === option.value;
+          const disabled = availablePeriods?.[option.value] === false;
           return (
             <TouchableOpacity
               key={option.value}
               accessibilityRole="button"
               accessibilityLabel={option.label}
-              accessibilityState={{ selected }}
+              accessibilityState={{ selected, disabled }}
+              accessibilityHint={disabled ? 'No hay registros en este período' : undefined}
+              disabled={disabled}
               hitSlop={{ top: 4, bottom: 4 }}
               onPress={() => onSelect(option.value)}
-              style={styles.option}
+              style={[styles.option, disabled && styles.disabledOption]}
             >
               <View style={[
                 styles.optionContent,
@@ -137,6 +140,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 3,
     borderRadius: 18,
   },
+  disabledOption: { opacity: 0.3 },
   selectedOption: {
     transform: [{ scale: 1.04 }],
   },

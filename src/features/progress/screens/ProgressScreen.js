@@ -28,7 +28,13 @@ import DateRangeModal from "../components/DateRangeModal";
 import ProgressChart from "../components/ProgressChart";
 import ProgressTable from "../components/ProgressTable";
 import ProgressPeriodSelector from "../components/ProgressPeriodSelector";
-import { filterProgressByDateRange, getProgressDateRange } from "../domain/progressDateRange";
+import {
+  filterProgressByDateRange,
+  getProgressDateRange,
+  getExercisesWithProgressInRange,
+  getAvailableProgressPeriods,
+  hasProgressChartData,
+} from "../domain/progressDateRange";
 import { addProgress, getProgresses } from "../data/progressRepository";
 
 export default function ProgressScreen() {
@@ -50,13 +56,17 @@ export default function ProgressScreen() {
   const [error, setError] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Filtro por fechas
+    // Filtro por fechas
+  const [headerDateRange, setHeaderDateRange] = useState(null);
+  const isFilterActive = headerDateRange !== null;
   const [filterStart, setFilterStart] = useState(null); // Date | null
   const [filterEnd, setFilterEnd] = useState(null);     // Date | null
   const [period, setPeriod] = useState('all');
 
   // Modal de rango
   const [isRangeModalOpen, setIsRangeModalOpen] = useState(false);
+  const [rangeTarget, setRangeTarget] = useState('chart');
+  const [rangeError, setRangeError] = useState("");
   const [tempStart, setTempStart] = useState(null);
   const [tempEnd, setTempEnd] = useState(null);
   const [showStartPicker, setShowStartPicker] = useState(false);
@@ -92,10 +102,11 @@ export default function ProgressScreen() {
 
       setAllExercises(viewExercises);
 
-      setDropdownExercises(viewExercises);
+      const eligible = getExercisesWithProgressInRange(viewExercises, allProg, headerDateRange);
+      setDropdownExercises(eligible);
 
       // Si el seleccionado no está en el nuevo dropdown, limpiar.
-      const stillValid = viewExercises.some(
+      const stillValid = eligible.some(
         exercise => exercise.id === selectedExercise
       );
       if (selectedExercise && !stillValid) {
@@ -121,7 +132,7 @@ export default function ProgressScreen() {
         setError("No se pudieron cargar los datos de progreso.");
       }
     }
-  }, [selectedExercise]);
+  }, [selectedExercise, headerDateRange]);
 
   useFocusEffect(
     useCallback(() => {
@@ -163,6 +174,7 @@ export default function ProgressScreen() {
     try {
       const updatedAll = await addProgress(selectedExercise, entry);
       setData(updatedAll);
+      if (isFilterActive) await refresh();
 
       setWeight("");
       setReps("");
@@ -178,16 +190,17 @@ export default function ProgressScreen() {
 
   const displayLabel = selectedExercise
     ? allExercises.find(e => e.id === selectedExercise)?.name
-    : "Selecciona ejercicio";
+    : (isFilterActive && !dropdownExercises.length ? "Sin ejercicios en rango" : "Selecciona ejercicio");
 
   const dateRange = useMemo(
-    () => getProgressDateRange(period, filterStart, filterEnd),
-    [period, filterStart, filterEnd, data]
+    () => headerDateRange ?? getProgressDateRange(period, filterStart, filterEnd),
+    [headerDateRange, period, filterStart, filterEnd, data]
   );
   const visibleData = useMemo(
     () => filterProgressByDateRange(data, dateRange),
     [data, dateRange]
   );
+  const availablePeriods = useMemo(() => getAvailableProgressPeriods(data), [data]);
 
   const dataAsc = useMemo(
     () => [...visibleData].sort((a, b) => new Date(a.date) - new Date(b.date)),
@@ -199,22 +212,28 @@ export default function ProgressScreen() {
   );
 
   // — Modal rango —
-  const openRangeModal = useCallback(() => {
+  const openRangeModal = useCallback((target = 'chart') => {
+    setRangeError("");
+    setRangeTarget(target);
     setDropdownOpen(false);
-    setTempStart(filterStart ?? new Date());
-    setTempEnd(filterEnd ?? new Date());
+    const start = target === 'header' ? headerDateRange?.start : filterStart;
+    const end = target === 'header' ? headerDateRange?.end : filterEnd;
+    setTempStart(start ?? new Date());
+    setTempEnd(end ?? new Date());
     setShowStartPicker(false);
     setShowEndPicker(false);
     setIsRangeModalOpen(true);
-  }, [filterStart, filterEnd]);
+  }, [headerDateRange, filterStart, filterEnd]);
 
   const closeRangeModal = useCallback(() => {
+    setRangeError("");
     setIsRangeModalOpen(false);
     setShowStartPicker(false);
     setShowEndPicker(false);
   }, []);
 
   const applyRange = useCallback(() => {
+    setRangeError("");
     if (!tempStart || !tempEnd) {
       Alert.alert("Atención", "Seleccioná fecha desde y hasta.");
       return;
@@ -229,15 +248,36 @@ export default function ProgressScreen() {
       return;
     }
 
-    setFilterStart(s);
-    setFilterEnd(e);
-    setPeriod('custom');
+    const nextRange = getProgressDateRange('custom', s, e);
+    if (rangeTarget === 'header') {
+      setHeaderDateRange(nextRange);
+    } else {
+      if (!hasProgressChartData(data, nextRange)) {
+        setRangeError("No preferis probar con un periodo en el que hayas entrenado?");
+        return;
+      }
+      setFilterStart(s);
+      setFilterEnd(e);
+      setPeriod('custom');
+    }
     Vibration.vibrate([0, 35, 60, 35]);
 
     closeRangeModal();
-  }, [tempStart, tempEnd, closeRangeModal]);
+  }, [tempStart, tempEnd, rangeTarget, data, closeRangeModal]);
+
+  // As in the original calendar: a second press clears the header filter.
+  const onPressCalendar = useCallback(() => {
+    if (isFilterActive) {
+      setHeaderDateRange(null);
+      setDropdownOpen(false);
+      Vibration.vibrate([0, 25]);
+    } else {
+      openRangeModal('header');
+    }
+  }, [isFilterActive, openRangeModal]);
 
   const selectPeriod = useCallback((nextPeriod) => {
+    if (availablePeriods[nextPeriod] === false) return;
     if (nextPeriod === 'custom') {
       openRangeModal();
       return;
@@ -245,7 +285,7 @@ export default function ProgressScreen() {
     setPeriod(nextPeriod);
     setDropdownOpen(false);
     Vibration.vibrate([0, 25]);
-  }, [openRangeModal]);
+  }, [availablePeriods, openRangeModal]);
 
   const formatDate = useCallback((d) => {
     if (!d) return "--/--/----";
@@ -269,15 +309,23 @@ export default function ProgressScreen() {
             <Icon name="edit" color="#fff" size={24} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.headerButton} onPress={openRangeModal} accessibilityRole="button" accessibilityLabel="Elegir rango de fechas">
+          <TouchableOpacity style={styles.headerButton} onPress={onPressCalendar} accessibilityRole="button" accessibilityLabel={isFilterActive ? "Quitar filtro de ejercicios por fecha" : "Filtrar ejercicios por fecha"}>
             <Icon
-              name="date-range"
+              name={isFilterActive ? "close" : "date-range"}
               color="#fff"
               size={24}
             />
           </TouchableOpacity>
         </View>
       </View>
+
+      {isFilterActive && (
+        <View style={[styles.filterBar, { backgroundColor: cardBg }]}>
+          <Text style={{ color: labelColor, fontSize: 12 }}>
+            Filtrando por fechas: {rangeLabel}
+          </Text>
+        </View>
+      )}
 
       <ScrollView contentContainerStyle={[styles.content, { backgroundColor: bgScreen }]}>
         <Text style={[styles.label, { color: labelColor }]}>Ejercicio:</Text>
@@ -369,14 +417,15 @@ export default function ProgressScreen() {
 
         <ProgressChart
           key={selectedExercise}
-          animationKey={`${selectedExercise}-${period}-${rangeLabel ?? 'all'}`}
+          animationKey={`${selectedExercise}-${isFilterActive ? 'header' : period}-${rangeLabel ?? 'all'}`}
           data={dataAsc}
           viewMode="Peso"
           isDark={isDark}
           emptyMessage={selectedExercise ? 'No hay registros en este período' : 'Selecciona un ejercicio para ver su progreso'}
           periodSelector={
-            <ProgressPeriodSelector
+            !isFilterActive && <ProgressPeriodSelector
               period={period}
+              availablePeriods={availablePeriods}
               onSelect={selectPeriod}
               rangeLabel={rangeLabel}
               isDark={isDark}
@@ -389,6 +438,8 @@ export default function ProgressScreen() {
 
       {/* Modal rango de fechas (SIN oscurecer fondo) */}
       <DateRangeModal
+        errorMessage={rangeError}
+        helpText={rangeTarget === 'header' ? 'Elegí un “desde” y “hasta”. Solo aparecerán los ejercicios con registros en ese intervalo, y su gráfico e historial se limitarán a esas fechas.' : undefined}
         visible={isRangeModalOpen}
         onDismiss={closeRangeModal}
         isDark={isDark}
@@ -404,11 +455,17 @@ export default function ProgressScreen() {
         onOpenEndPicker={() => setShowEndPicker(true)}
         onStartPickerChange={(event, selected) => {
           if (Platform.OS !== "ios") setShowStartPicker(false);
-          if (event?.type === "set" && selected) setTempStart(selected);
+          if (event?.type === "set" && selected) {
+            setTempStart(selected);
+            setRangeError("");
+          }
         }}
         onEndPickerChange={(event, selected) => {
           if (Platform.OS !== "ios") setShowEndPicker(false);
-          if (event?.type === "set" && selected) setTempEnd(selected);
+          if (event?.type === "set" && selected) {
+            setTempEnd(selected);
+            setRangeError("");
+          }
         }}
         onCancel={closeRangeModal}
         onApply={applyRange}
@@ -433,6 +490,12 @@ const styles = StyleSheet.create({
     minHeight: 44,
     alignItems: "center",
     justifyContent: "center",
+  },
+  filterBar: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#00000022",
   },
 
   content: { padding: 16, paddingBottom: 32 },

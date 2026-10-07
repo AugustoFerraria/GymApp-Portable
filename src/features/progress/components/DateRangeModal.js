@@ -21,6 +21,8 @@ export default function DateRangeModal({
   onEndPickerChange,
   onCancel,
   onApply,
+  helpText,
+  errorMessage,
 }) {
   return (
     <Portal>
@@ -43,7 +45,7 @@ export default function DateRangeModal({
         </Text>
 
         <Text style={[styles.modalHelp, { color: isDark ? "#9AA4B2" : "#6B7280" }]}>
-          Elegí un “desde” y “hasta”. El gráfico y la lista mostrarán los registros de ese período, incluyendo ambos días.
+          {helpText ?? 'Elegí un “desde” y “hasta”. El gráfico y la lista mostrarán los registros de ese período, incluyendo ambos días.'}
         </Text>
 
         <View style={styles.dateRow}>
@@ -89,6 +91,15 @@ export default function DateRangeModal({
             textColor={labelColor}
           />
         )}
+
+        {errorMessage ? (
+          <Text
+            accessibilityLiveRegion="polite"
+            style={[styles.modalError, { color: isDark ? "#FF6B6B" : "#B91C1C" }]}
+          >
+            {errorMessage}
+          </Text>
+        ) : null}
 
         <View style={styles.modalActions}>
           <TouchableOpacity
@@ -144,6 +155,10 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     gap: 10,
     marginTop: 14,
+  },
+  modalError: {
+    fontSize: 13,
+    marginTop: 8,
   },
   modalBtn: {
     borderWidth: 1,
