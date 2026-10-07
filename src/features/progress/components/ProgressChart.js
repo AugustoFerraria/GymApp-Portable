@@ -168,7 +168,6 @@ export default function ProgressChart({ data, viewMode, periodSelector, emptyMes
         <RNText style={[styles.empty, { color: isDark ? '#9AA4B2' : '#666' }]}>
           {emptyMessage ?? 'No hay datos disponibles'}
         </RNText>
-        {periodSelector}
       </View>
     );
   }
