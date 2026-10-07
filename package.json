@@ -6,6 +6,8 @@
     "node": ">=20.19.4"
   },
   "scripts": {
+    "test": "node tests/run.mjs",
+    "test:watch": "node tests/run.mjs --watch",
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",

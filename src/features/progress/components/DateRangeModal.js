@@ -43,7 +43,7 @@ export default function DateRangeModal({
         </Text>
 
         <Text style={[styles.modalHelp, { color: isDark ? "#9AA4B2" : "#6B7280" }]}>
-          Elegí un “desde” y “hasta”. Luego verás solo ejercicios con registros en ese rango.
+          Elegí un “desde” y “hasta”. El gráfico y la lista mostrarán los registros de ese período, incluyendo ambos días.
         </Text>
 
         <View style={styles.dateRow}>

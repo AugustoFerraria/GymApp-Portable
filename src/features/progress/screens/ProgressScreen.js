@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useMemo, useRef } from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   TextInput,
@@ -14,6 +13,7 @@ import {
   Vibration,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 
 import {
@@ -27,11 +27,14 @@ import { useAppTheme } from "../../../shared/theme/ThemeContext";
 import DateRangeModal from "../components/DateRangeModal";
 import ProgressChart from "../components/ProgressChart";
 import ProgressTable from "../components/ProgressTable";
+import ProgressPeriodSelector from "../components/ProgressPeriodSelector";
+import { filterProgressByDateRange, getProgressDateRange } from "../domain/progressDateRange";
 import { addProgress, getProgresses } from "../data/progressRepository";
 
 export default function ProgressScreen() {
   const navigation = useNavigation();
   const { isDark } = useAppTheme();
+  const insets = useSafeAreaInsets();
 
   const [weight, setWeight] = useState("");
   const [reps, setReps] = useState("");
@@ -50,7 +53,7 @@ export default function ProgressScreen() {
   // Filtro por fechas
   const [filterStart, setFilterStart] = useState(null); // Date | null
   const [filterEnd, setFilterEnd] = useState(null);     // Date | null
-  const isFilterActive = !!filterStart && !!filterEnd;
+  const [period, setPeriod] = useState('all');
 
   // Modal de rango
   const [isRangeModalOpen, setIsRangeModalOpen] = useState(false);
@@ -68,21 +71,6 @@ export default function ProgressScreen() {
   const inputTextColor   = isDark ? "#fff" : "#111827";
   const placeholderColor = isDark ? "#fff" : "#666666";
   const borderColor      = "#FFD700";
-
-  const normalizeDayBounds = useCallback((start, end) => {
-    const s = new Date(start);
-    s.setHours(0, 0, 0, 0);
-    const e = new Date(end);
-    e.setHours(23, 59, 59, 999);
-    return { s, e };
-  }, []);
-
-  const isWithinRange = useCallback((isoDate) => {
-    if (!isFilterActive) return true;
-    const { s, e } = normalizeDayBounds(filterStart, filterEnd);
-    const d = new Date(isoDate);
-    return d >= s && d <= e;
-  }, [isFilterActive, filterStart, filterEnd, normalizeDayBounds]);
 
   const refresh = useCallback(async () => {
     const requestId = ++refreshRequestId.current;
@@ -104,20 +92,10 @@ export default function ProgressScreen() {
 
       setAllExercises(viewExercises);
 
-      // Con filtro, mostrar sólo ejercicios con registros dentro del rango.
-      let eligible = viewExercises;
-      if (isFilterActive) {
-        const eligibleIds = new Set(
-          allProg
-            .filter(progress => progress?.date && isWithinRange(progress.date))
-            .map(progress => progress.exerciseId)
-        );
-        eligible = viewExercises.filter(exercise => eligibleIds.has(exercise.id));
-      }
-      setDropdownExercises(eligible);
+      setDropdownExercises(viewExercises);
 
       // Si el seleccionado no está en el nuevo dropdown, limpiar.
-      const stillValid = eligible.some(
+      const stillValid = viewExercises.some(
         exercise => exercise.id === selectedExercise
       );
       if (selectedExercise && !stillValid) {
@@ -128,18 +106,12 @@ export default function ProgressScreen() {
         return;
       }
 
-      // Datos del ejercicio seleccionado, filtrados por rango si aplica.
+      // Keep the full history; chart and table share the same derived date filter.
       if (selectedExercise) {
         const allForExercise = allProg.filter(
           progress => progress.exerciseId === selectedExercise
         );
-        const filteredForExercise = isFilterActive
-          ? allForExercise.filter(
-              progress => progress?.date && isWithinRange(progress.date)
-            )
-          : allForExercise;
-
-        setData(filteredForExercise);
+        setData(allForExercise);
       } else {
         setData([]);
       }
@@ -149,7 +121,7 @@ export default function ProgressScreen() {
         setError("No se pudieron cargar los datos de progreso.");
       }
     }
-  }, [isFilterActive, isWithinRange, selectedExercise]);
+  }, [selectedExercise]);
 
   useFocusEffect(
     useCallback(() => {
@@ -190,16 +162,7 @@ export default function ProgressScreen() {
 
     try {
       const updatedAll = await addProgress(selectedExercise, entry);
-      const nextData = isFilterActive
-        ? updatedAll.filter(p => p?.date && isWithinRange(p.date))
-        : updatedAll;
-
-      setData(nextData);
-
-      // Con filtro activo, un registro nuevo puede cambiar los ejercicios elegibles.
-      if (isFilterActive) {
-        await refresh();
-      }
+      setData(updatedAll);
 
       setWeight("");
       setReps("");
@@ -215,15 +178,24 @@ export default function ProgressScreen() {
 
   const displayLabel = selectedExercise
     ? allExercises.find(e => e.id === selectedExercise)?.name
-    : (dropdownExercises.length ? "Selecciona ejercicio" : (isFilterActive ? "Sin ejercicios en rango" : "Selecciona ejercicio"));
+    : "Selecciona ejercicio";
+
+  const dateRange = useMemo(
+    () => getProgressDateRange(period, filterStart, filterEnd),
+    [period, filterStart, filterEnd, data]
+  );
+  const visibleData = useMemo(
+    () => filterProgressByDateRange(data, dateRange),
+    [data, dateRange]
+  );
 
   const dataAsc = useMemo(
-    () => [...data].sort((a, b) => new Date(a.date) - new Date(b.date)),
-    [data]
+    () => [...visibleData].sort((a, b) => new Date(a.date) - new Date(b.date)),
+    [visibleData]
   );
   const dataDesc = useMemo(
-    () => [...data].sort((a, b) => new Date(b.date) - new Date(a.date)),
-    [data]
+    () => [...dataAsc].reverse(),
+    [dataAsc]
   );
 
   // — Modal rango —
@@ -231,6 +203,8 @@ export default function ProgressScreen() {
     setDropdownOpen(false);
     setTempStart(filterStart ?? new Date());
     setTempEnd(filterEnd ?? new Date());
+    setShowStartPicker(false);
+    setShowEndPicker(false);
     setIsRangeModalOpen(true);
   }, [filterStart, filterEnd]);
 
@@ -247,6 +221,8 @@ export default function ProgressScreen() {
     }
     const s = new Date(tempStart);
     const e = new Date(tempEnd);
+    s.setHours(0, 0, 0, 0);
+    e.setHours(0, 0, 0, 0);
 
     if (e < s) {
       Alert.alert("Atención", "La fecha 'hasta' no puede ser anterior a 'desde'.");
@@ -255,60 +231,53 @@ export default function ProgressScreen() {
 
     setFilterStart(s);
     setFilterEnd(e);
+    setPeriod('custom');
     Vibration.vibrate([0, 35, 60, 35]);
 
     closeRangeModal();
   }, [tempStart, tempEnd, closeRangeModal]);
 
-  const clearRangeFilter = useCallback(() => {
-    setFilterStart(null);
-    setFilterEnd(null);
+  const selectPeriod = useCallback((nextPeriod) => {
+    if (nextPeriod === 'custom') {
+      openRangeModal();
+      return;
+    }
+    setPeriod(nextPeriod);
     setDropdownOpen(false);
     Vibration.vibrate([0, 25]);
-  }, []);
-
-  const onPressCalendar = useCallback(() => {
-    if (isFilterActive) clearRangeFilter();
-    else openRangeModal();
-  }, [isFilterActive, clearRangeFilter, openRangeModal]);
+  }, [openRangeModal]);
 
   const formatDate = useCallback((d) => {
     if (!d) return "--/--/----";
     return new Date(d).toLocaleDateString();
   }, []);
 
-  const rangeLabel = isFilterActive ? `${formatDate(filterStart)} - ${formatDate(filterEnd)}` : null;
+  const rangeLabel = dateRange ? `${formatDate(dateRange.start)} - ${formatDate(dateRange.end)}` : null;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: bgScreen }]}>
-      <View style={styles.header}>
+    <View style={[styles.safe, { backgroundColor: bgScreen }]}>
+      <View style={[styles.header, { height: 56 + insets.top, paddingTop: insets.top }]}>
         <Text style={styles.headerTitle}>Progreso</Text>
 
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={styles.headerButton}
+            accessibilityRole="button"
+            accessibilityLabel="Gestionar progreso"
             onPress={() => navigation.navigate(PROGRESS_ROUTES.MANAGE)}
           >
             <Icon name="edit" color="#fff" size={24} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.headerButton} onPress={onPressCalendar}>
+          <TouchableOpacity style={styles.headerButton} onPress={openRangeModal} accessibilityRole="button" accessibilityLabel="Elegir rango de fechas">
             <Icon
-              name={isFilterActive ? "close" : "date-range"}
+              name="date-range"
               color="#fff"
               size={24}
             />
           </TouchableOpacity>
         </View>
       </View>
-
-      {isFilterActive && (
-        <View style={[styles.filterBar, { backgroundColor: isDark ? "#131922" : "#f2f2f2" }]}>
-          <Text style={{ color: labelColor, fontSize: 12 }}>
-            Filtrando por fechas: {rangeLabel}
-          </Text>
-        </View>
-      )}
 
       <ScrollView contentContainerStyle={[styles.content, { backgroundColor: bgScreen }]}>
         <Text style={[styles.label, { color: labelColor }]}>Ejercicio:</Text>
@@ -398,13 +367,22 @@ export default function ProgressScreen() {
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-        {dataAsc.length ? (
-          <ProgressChart data={dataAsc} viewMode="Peso" />
-        ) : (
-          <Text style={[styles.noDataText, { color: placeholderColor }]}>
-            No hay datos disponibles
-          </Text>
-        )}
+        <ProgressChart
+          key={selectedExercise}
+          animationKey={`${selectedExercise}-${period}-${rangeLabel ?? 'all'}`}
+          data={dataAsc}
+          viewMode="Peso"
+          isDark={isDark}
+          emptyMessage={selectedExercise ? 'No hay registros en este período' : 'Selecciona un ejercicio para ver su progreso'}
+          periodSelector={
+            <ProgressPeriodSelector
+              period={period}
+              onSelect={selectPeriod}
+              rangeLabel={rangeLabel}
+              isDark={isDark}
+            />
+          }
+        />
 
         <ProgressTable data={dataDesc} isDark={isDark} labelColor={labelColor} />
       </ScrollView>
@@ -435,29 +413,26 @@ export default function ProgressScreen() {
         onCancel={closeRangeModal}
         onApply={applyRange}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   header: {
-    height: 56,
     backgroundColor: "#FFD700",
     flexDirection: "row",
-    alignItems: "flex-end",
-    paddingBottom: 15,
+    alignItems: "center",
     paddingHorizontal: 16,
   },
   headerTitle: { flex: 1, fontSize: 20, fontWeight: "bold", color: "#fff" },
   headerActions: { flexDirection: "row" },
-  headerButton: { padding: 8 },
-
-  filterBar: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#00000022",
+  headerButton: {
+    padding: 8,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   content: { padding: 16, paddingBottom: 32 },
@@ -499,6 +474,5 @@ const styles = StyleSheet.create({
   switchLabel: { fontSize: 16 },
   btnWrapper: { marginBottom: 16 },
   errorText: { color: "red", textAlign: "center", marginBottom: 16 },
-  noDataText: { textAlign: "center", marginVertical: 16 },
 
 });

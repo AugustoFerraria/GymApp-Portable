@@ -15,7 +15,7 @@ const formatTruncatedValue = (value) => {
   return Number.isInteger(truncated) ? String(truncated) : truncated.toFixed(1);
 };
 
-export default function ProgressChart({ data, viewMode }) {
+export default function ProgressChart({ data, viewMode, periodSelector, emptyMessage, isDark, animationKey }) {
   // Filtrar sólo valores numéricos válidos
   const filtered = useMemo(() => {
     return data.filter(entry => {
@@ -50,6 +50,7 @@ export default function ProgressChart({ data, viewMode }) {
 
   // referencia al dataset anterior.
   const previousValuesRef = useRef([]);
+  const previousAnimationKeyRef = useRef(animationKey);
 
   // evitar animación en el primer render.
   const isFirstRenderRef = useRef(true);
@@ -61,6 +62,12 @@ export default function ProgressChart({ data, viewMode }) {
   const riseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    // Reset only the plot animation when the period changes, keeping the selector mounted.
+    if (previousAnimationKeyRef.current !== animationKey) {
+      previousAnimationKeyRef.current = animationKey;
+      previousValuesRef.current = [];
+      isFirstRenderRef.current = true;
+    }
     if (!targetValues.length) {
       fadeAnim.stopAnimation();
       riseAnim.stopAnimation();
@@ -148,12 +155,22 @@ export default function ProgressChart({ data, viewMode }) {
       fadeAnim.stopAnimation();
       riseAnim.stopAnimation();
     };
-  }, [valuesSignature, targetValues, viewMode, fadeAnim, riseAnim]);
+  }, [valuesSignature, targetValues, viewMode, fadeAnim, riseAnim, animationKey]);
 
-  const values = animatedValues.length ? animatedValues : targetValues;
+  const values = previousAnimationKeyRef.current === animationKey && animatedValues.length === targetValues.length
+    ? animatedValues
+    : targetValues;
+  const panelColor = isDark ? 'rgba(70, 77, 79, 0.42)' : 'rgba(229, 231, 235, 0.65)';
 
   if (!filtered.length) {
-    return <RNText style={styles.empty}>No hay datos disponibles</RNText>;
+    return (
+      <View style={[styles.container, { backgroundColor: panelColor }]}>
+        <RNText style={[styles.empty, { color: isDark ? '#9AA4B2' : '#666' }]}>
+          {emptyMessage ?? 'No hay datos disponibles'}
+        </RNText>
+        {periodSelector}
+      </View>
+    );
   }
 
   const getPointColors = (index) => {
@@ -172,7 +189,7 @@ export default function ProgressChart({ data, viewMode }) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: panelColor }]}>
       <LineChart
   data={{ labels, datasets: [{ data: values }] }}
   width={screenWidth}
@@ -187,8 +204,10 @@ export default function ProgressChart({ data, viewMode }) {
   withVerticalLabels={false}
   chartConfig={{
     backgroundColor: '#B0B0B0',
-    backgroundGradientFrom: 'rgba(70, 77, 79, 0.6)',
-    backgroundGradientTo: 'rgba(0, 0, 0, 0.6)',
+    backgroundGradientFrom: '#242A2C',
+    backgroundGradientTo: '#242A2C',
+    backgroundGradientFromOpacity: 0,
+    backgroundGradientToOpacity: 0,
     decimalPlaces: 1,
     color: (opacity = 1) => `rgba(243,243,25,${opacity})`,
     labelColor: (opacity = 1) => `rgba(243,243,25,${opacity})`,
@@ -225,6 +244,7 @@ export default function ProgressChart({ data, viewMode }) {
     </SvgText>
   )}
 />
+      {periodSelector}
     </View>
   );
 }
@@ -233,6 +253,8 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: 16,
     alignItems: 'center',
+    width: screenWidth,
+    borderRadius: 16,
   },
   chart: {
     borderRadius: 16,

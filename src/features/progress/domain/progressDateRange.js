@@ -1,0 +1,43 @@
+export const PROGRESS_PERIODS = Object.freeze([
+  { value: 'all', label: 'Todos los tiempos' },
+  { value: 'year', label: '1 año', months: 12 },
+  { value: 'sixMonths', label: '6 meses', months: 6 },
+  { value: 'twoMonths', label: '2 meses', months: 2 },
+  { value: 'month', label: '1 mes', months: 1 },
+  { value: 'custom', label: 'Personalizado' },
+]);
+
+export function getProgressDateRange(period, start, end, now = new Date()) {
+  if (period === 'all') return null;
+
+  let from;
+  let to;
+  if (period === 'custom') {
+    if (!start || !end) return null;
+    from = new Date(start);
+    to = new Date(end);
+  } else {
+    const months = PROGRESS_PERIODS.find(option => option.value === period)?.months;
+    if (!months) return null;
+    to = new Date(now);
+    from = new Date(now);
+    const day = from.getDate();
+    from.setDate(1);
+    from.setMonth(from.getMonth() - months);
+    const lastDay = new Date(from.getFullYear(), from.getMonth() + 1, 0).getDate();
+    from.setDate(Math.min(day, lastDay));
+  }
+
+  from.setHours(0, 0, 0, 0);
+  to.setHours(23, 59, 59, 999);
+  return { start: from, end: to };
+}
+
+export function filterProgressByDateRange(data, range) {
+  if (!range) return data;
+  return data.filter(entry => {
+    if (!entry?.date) return false;
+    const date = new Date(entry.date);
+    return date >= range.start && date <= range.end;
+  });
+}

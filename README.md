@@ -8,65 +8,52 @@
   Planificá tus rutinas, organizá tus ejercicios y seguí tu progreso de entrenamiento desde una sola app.
 </p>
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Expo-SDK%2055-000020?logo=expo&logoColor=white" alt="Expo SDK 55" />
-  <img src="https://img.shields.io/badge/React%20Native-0.83-61DAFB?logo=react&logoColor=white" alt="React Native 0.83" />
-  <img src="https://img.shields.io/badge/Plataformas-Android%20%7C%20iOS%20%7C%20Web-FFD700" alt="Android, iOS y Web" />
-</p>
+## Tu entrenamiento, organizado
 
-## ¿Qué permite hacer?
+GymApp es una aplicación para llevar un registro personal de tus entrenamientos. Reúne tus rutinas, un catálogo de ejercicios y tu historial de progreso para que puedas consultar qué entrenar y cómo evolucionan tus registros con el tiempo.
 
-- Crear, editar, consultar y eliminar rutinas personalizadas.
-- Armar cada rutina con ejercicios, series y repeticiones; el orden se puede cambiar arrastrando.
-- Administrar el catálogo de ejercicios y ordenarlo manualmente, de A a Z o de Z a A.
-- Registrar peso, repeticiones y si la serie llegó al fallo.
-- Consultar el progreso con gráfico, historial y filtro por rango de fechas.
-- Usar tema claro u oscuro; la preferencia se conserva entre sesiones.
+## Rutinas a tu medida
 
-Todos los datos se guardan localmente en el dispositivo, por lo que la app funciona sin depender de un backend para gestionar rutinas, ejercicios y registros.
+- Creá, editá, consultá y eliminá rutinas personalizadas.
+- Agregá ejercicios con sus series y repeticiones.
+- Organizá el orden de los ejercicios arrastrándolos dentro de la rutina.
+- Consultá cada rutina y los detalles de sus ejercicios desde la app.
 
-## Ejecutar el proyecto
+## Tu catálogo de ejercicios
 
-Requiere Node.js `>= 20.19.4`.
+- Contá con un catálogo inicial de ejercicios.
+- Creá ejercicios propios y editá sus nombres y descripciones.
+- Eliminá los ejercicios que no necesites.
+- Ordená el catálogo de forma personalizada, de A a Z o de Z a A.
 
-```bash
-npm ci
-npm start
-```
+## Registrá y visualizá tu progreso
 
-Desde Expo podés abrir la aplicación con Expo Go, un emulador o el navegador. También están disponibles los comandos directos:
+Guardá el peso utilizado, las repeticiones y si llegaste al fallo en cada registro. Elegí un ejercicio para consultar su evolución en el gráfico y revisar el detalle en la lista de abajo.
 
-```bash
-npm run android
-npm run ios
-npm run web
-```
+El selector integrado al gráfico permite elegir:
 
-## Tecnologías
+- **All:** todo el historial.
+- **1A:** el último año.
+- **6M:** los últimos seis meses.
+- **2M:** los últimos dos meses.
+- **1M:** el último mes.
+- **Calendario:** un rango personalizado entre dos fechas, incluyendo ambos días completos.
 
-- Expo y React Native
-- React Navigation
-- React Native Paper
-- AsyncStorage para persistencia local
-- React Native Chart Kit para la visualización del progreso
+El gráfico y la lista siempre muestran los registros del mismo período. Cambiar el filtro no elimina datos: solo cambia qué parte del historial estás viendo.
 
-## Organización del proyecto
+La barra de selección es compacta y redondeada, con colores translúcidos y un indicador amarillo que se desliza entre las opciones.
 
-La aplicación está organizada por funcionalidades para que cada área evolucione de forma independiente:
+## Una experiencia simple y personal
 
-```text
-src/
-├── application/      # Arranque, providers y navegación
-├── features/         # Rutinas, ejercicios y progreso
-├── infrastructure/   # Persistencia local
-└── shared/           # Tema, rutas y utilidades comunes
-```
+La interfaz mantiene una identidad visual en amarillo y tonos neutros, con tema claro y oscuro. Tu preferencia de tema se conserva entre sesiones.
 
-La guía técnica de la arquitectura está en [src/README.md](src/README.md).
+En la pantalla de progreso, el encabezado respeta el espacio de la barra de estado del teléfono para mantener accesibles sus controles.
 
-## Calidad y compatibilidad
+## Tus datos, en tu dispositivo
 
-El proyecto se valida con Expo SDK 55 y se puede exportar para Android, iOS y web. La configuración de actualizaciones OTA usa EAS Update con canales separados para desarrollo, preview y producción.
+Las rutinas, los ejercicios, los registros y la preferencia de tema se guardan localmente. La gestión del entrenamiento no depende de un backend.
+
+El almacenamiento es local, no una copia de seguridad en la nube: borrar los datos de la aplicación o desinstalarla puede eliminar tus registros.
 
 ---
 
